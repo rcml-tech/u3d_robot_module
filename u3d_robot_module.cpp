@@ -20,12 +20,12 @@
 #include "module.h"
 #include "robot_module.h"
 #include "function_module.h"
-#include "virtual_robot.h"
+#include "u3d_robot.h"
 
 ////////// Опишем глобальные константы и макросы
 const unsigned int COUNT_u3dRobot_FUNCTIONS = 5;
 const unsigned int COUNT_AXIS = 3;
-variable_value G_UNIQ_ID = 1; // Пришлось ввести пока Глобальную переменную чтобы были уникальные  ID процесса
+int G_UNIQ_ID = 1; // Пришлось ввести пока Глобальную переменную чтобы были уникальные  ID процесса
 SOCKET VR_socket;
 
 #define ADD_u3dRobot_FUNCTION(FUNCTION_NAME, COUNT_PARAMS, GIVE_EXCEPTION) \
@@ -59,14 +59,14 @@ ADD_ROBOT_AXIS("straight", 100, -100)\
 ADD_ROBOT_AXIS("rotation", 100, -100);
 
 
-std::string createWorldMessage(variable_value uniq_id, variable_value l, variable_value w, variable_value h){
+std::string createWorldMessage(int uniq_id, int l, int w, int h){
 	std::string fir = "%%";
 	std::string plusr = "+init:";
 	std::string rezult;
 
 	// Собираем наше сообщение
 	rezult.assign(fir);
-	rezult.append(std::to_string(uniq_id));
+	rezult.append(std::to_string( (int) uniq_id));
 	rezult.append(plusr);
 	rezult.append(std::to_string(l));
 	rezult.append(",");
@@ -77,34 +77,34 @@ std::string createWorldMessage(variable_value uniq_id, variable_value l, variabl
 
 	return rezult;
 };
-std::string destroyWorldMessage(variable_value uniq_id){
+std::string destroyWorldMessage(int uniq_id){
 	std::string fir = "%%";
 	std::string plusr = "+destroy&";
 	std::string rezult;
 
 	// Собираем наше сообщение
 	rezult.assign(fir);
-	rezult.append(std::to_string(uniq_id));
+	rezult.append(std::to_string( (int) uniq_id));
 	rezult.append(plusr);
 
 	return rezult;
 };
 
-std::string deleteMessage(variable_value uniq_id, variable_value obj_id){
+std::string deleteMessage(int uniq_id, int obj_id){
 	std::string fir = "%%";
 	std::string plusr = "+delete:";
 	std::string rezult;
 
 	// Собираем наше сообщение
 	rezult.assign(fir);
-	rezult.append(std::to_string(uniq_id));
+	rezult.append(std::to_string( (int) uniq_id));
 	rezult.append(plusr);
 	rezult.append(std::to_string(obj_id));
 	rezult.append("&");
 
 	return rezult;
 };
-std::string createMessage(variable_value uniq_id, std::string word, variable_value x, variable_value y, variable_value d_x, variable_value d_y, variable_value d_z, variable_value color){
+std::string createMessage(int uniq_id, std::string word, int x, int y, int d_x, int d_y, int d_z, int color){
 	std::string fir = "%%";
 	std::string plusr = "+robot:";
 	std::string col;
@@ -127,7 +127,7 @@ std::string createMessage(variable_value uniq_id, std::string word, variable_val
 	};
 	// Собираем наше сообщение
 	rezult.assign(fir);
-	rezult.append(std::to_string(uniq_id));
+	rezult.append(std::to_string( (int) uniq_id));
 	rezult.append(plusr);
 	rezult.append(word);
 	rezult.append(",");
@@ -143,11 +143,10 @@ std::string createMessage(variable_value uniq_id, std::string word, variable_val
 	rezult.append(",");
 	rezult.append(col);
 	rezult.append("&");
-
 	return rezult;
 };
 
-std::string moveMessage(variable_value uniq_id, std::string word, variable_value obj_id, variable_value x, variable_value y, variable_value speed){
+std::string moveMessage(int uniq_id, std::string word, int obj_id, int x, int y, int speed){
 	std::string fir = "%%";
 	std::string plusr = "+robot:";
 
@@ -155,7 +154,7 @@ std::string moveMessage(variable_value uniq_id, std::string word, variable_value
 
 	// Собираем наше сообщение
 	rezult.assign(fir);
-	rezult.append(std::to_string(uniq_id));
+	rezult.append(std::to_string( (int) uniq_id));
 	rezult.append(plusr);
 	rezult.append(word);
 	rezult.append(",");
@@ -170,7 +169,7 @@ std::string moveMessage(variable_value uniq_id, std::string word, variable_value
 
 	return rezult;
 };
-std::string changecolorMessage(variable_value uniq_id, std::string word, variable_value obj_id, variable_value color){
+std::string changecolorMessage(int uniq_id, std::string word, int obj_id, int color){
 	std::string fir = "%%";
 	std::string plusr = "+robot:";
 	std::string col;
@@ -194,7 +193,7 @@ std::string changecolorMessage(variable_value uniq_id, std::string word, variabl
 	};
 	// Собираем наше сообщение
 	rezult.assign(fir);
-	rezult.append(std::to_string(uniq_id));
+	rezult.append(std::to_string( (int) uniq_id));
 	rezult.append(plusr);
 	rezult.append(word);
 	rezult.append(",");
@@ -206,80 +205,111 @@ std::string changecolorMessage(variable_value uniq_id, std::string word, variabl
 	return rezult;
 };
 
-std::string reqXMessage(variable_value uniq_id, std::string word, variable_value obj_id){
+std::string reqXMessage(int uniq_id, std::string word, int obj_id){
 	std::string fir = "%%";
 	std::string plusr = "+robot:";
-	std::string rezult;
-
+	std::string rezult = " 1";
 	// Собираем наше сообщение
 	rezult.assign(fir);
-	rezult.append(std::to_string(uniq_id));
+	rezult.append(std::to_string( (int) uniq_id));
 	rezult.append(plusr);
 	rezult.append(word);
 	rezult.append(",");
-	rezult.append(std::to_string(obj_id));
+	rezult.append(std::to_string((int)obj_id));
 	rezult.append("&");
 
 	return rezult;
 };
-std::string reqYMessage(variable_value uniq_id, std::string word, variable_value obj_id){
+std::string reqYMessage(int uniq_id, std::string word, int obj_id){
 	std::string fir = "%%";
 	std::string plusr = "+robot:";
 	std::string rezult;
 
 	// Собираем наше сообщение
 	rezult.assign(fir);
-	rezult.append(std::to_string(uniq_id));
+	rezult.append(std::to_string( (int) uniq_id));
 	rezult.append(plusr);
 	rezult.append(word);
 	rezult.append(",");
-	rezult.append(std::to_string(obj_id));
+	rezult.append(std::to_string((int)obj_id));
 	rezult.append("&");
 
 	return rezult;
 };
 // Функция вытаскивающая из полученного сообщения ID объекта
-variable_value extractObj_id(char *str){
-	std::string temp(str);
-	char ctmp[10];
+int extractObj_id(char *str){
 
-	variable_value beg = temp.find(':') + 1;
-	variable_value end = temp.find('&');
-	variable_value len = end - beg;
+	int beg = 0;
+	int end = 0;
+	for (int i = 0; i < 30; i++){
+		if (*(str + i) == ':'){ beg = i+1; };
+		if (*(str + i) == '&'){ end = i; break; };
+	};
+	printf("- %s\n", " extract  works");
 
-	temp.copy(ctmp, len, beg);
-	std::string tmp(ctmp);
-	return std::stoi(tmp);
+	printf("- %d\n", beg);
+	printf("- %d\n", end);
+
+	char *cht = new char[(end - beg)];
+	printf("- %s\n", " extract works 2");
+
+	for (int i = 0; i <(end-beg); i++){
+		cht[i] =  *(str + i + beg) ;
+	};
+	//cht[j] = char(0);
+	printf("- %d\n", atoi(cht));
+
+	return atoi(cht);
 };
-variable_value extractX(char *str){
-	printf("- %s\n", "fex1");
-	std::string temp(str);
-	char chtmp[10];
-	printf("- %s\n", "fex2");
-	variable_value beg = temp.find(':') + 1;
-	variable_value end = temp.find(',');
-	variable_value len = end - beg;
-	printf("- %s\n",temp);
-	temp.copy(chtmp, len, beg);
-	printf("- %s\n", "fex3");
-	std::string tmp(chtmp);
-	printf("- %s\n", "fex4");
-	int inn = std::stoi(tmp);
-	printf("- %s\n", "fex5");
-	//printf("- %d\n", inn);
-	return std::stoi(tmp);
+int extractX(char *str){
+
+	int beg = 0;
+	int end = 0;
+	for (int i = 0; i < 30; i++){
+		printf("- %c\n", *(str + i));
+		if (*(str + i) == ':'){ beg = i + 1; };
+		if (*(str + i) == ','){ end = i; break; };
+	};
+	printf("- %s\n", " extract X works");
+
+	printf("- %d\n", beg);
+	printf("- %d\n", end);
+
+	char *cht = new char[(end - beg)];
+	printf("- %s\n", " extract X works 2");
+
+	for (int i = 0; i <(end - beg); i++){
+		cht[i] = *(str + i + beg);
+	};
+	//cht[j] = char(0);
+	printf("- %d\n", atoi(cht));
+
+	return atoi(cht);
 };
-variable_value extractY(char *str){
-	std::string temp(str);
-	char chtmp[10];
+int extractY(char *str){
 
-	variable_value beg = temp.find(',') + 1;
-	variable_value end = temp.find('&');
-	variable_value len = end - beg;
+	int beg = 0;
+	int end = 0;
+	for (int i = 0; i < 30; i++){
+		printf("- %c\n", *(str + i));
+		if (*(str + i) == ','){ beg = i + 1; };
+		if (*(str + i) == '&'){ end = i; break; };
+	};
+	printf("- %s\n", " extract X works");
 
-	temp.copy(chtmp, len, beg);
-	std::string tmp(chtmp);
-	return std::stoi(tmp);
+	printf("- %d\n", beg);
+	printf("- %d\n", end);
+
+	char *cht = new char[(end - beg)];
+	printf("- %s\n", " extract X works 2");
+
+	for (int i = 0; i <(end - beg); i++){
+		cht[i] = *(str + i + beg);
+	};
+	//cht[j] = char(0);
+	printf("- %d\n", atoi(cht));
+
+	return atoi(cht);
 };
 
 
@@ -435,8 +465,8 @@ void u3dRobotModule::robotFree(Robot *robot){
 				G_UNIQ_ID++;
 				send(VR_socket, mes.c_str(), mes.length(), 0);
 				// Сделал получение ответа после чтобы оно очередь не заьивало и всегда было доступно верное сообщение
-				char rec[22];
-				recv(VR_socket, rec, 22, 0);
+				char rec[30];
+				recv(VR_socket, rec, 30, 0);
 			}
 			break;
 		}
@@ -522,14 +552,14 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		switch (functionId) {
 		case 1: {
 			//G_UNIQ_ID;
-			variable_value pos_x = *args;
-			variable_value pos_y = *(args + 1);
-			variable_value d_x = *(args + 2);
-			variable_value d_y = *(args + 3);
-			variable_value d_z = *(args + 4);
+			int pos_x = *args;
+			int pos_y = *(args + 1);
+			int d_x = *(args + 2);
+			int d_y = *(args + 3);
+			int d_z = *(args + 4);
 
 			std::string mes;
-			char rec[22];
+			char rec[30];
 
 			mes = createMessage(G_UNIQ_ID, "create", pos_x, pos_y, d_x, d_y, d_z, 1);
 			// send message to SOCKET
@@ -539,8 +569,8 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 			Sleep(1500);
 			printf("- %s\n", "ex3");
 			// recive message from SOCKET
-			recv(VR_socket, rec, 22, 0);
-			printf("- %s\n", "ex4");
+			recv(VR_socket, rec,30, 0);
+			printf("- %s\n", rec);
 			robot_index = extractObj_id(rec);
 			printf("- %s\n", "ex5");
 			is_Created = true;
@@ -550,9 +580,9 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		case 2: {
 			if (is_Created){
 				// execute fucntion move
-				variable_value pos_x = *args;
-				variable_value pos_y = *(args + 1);
-				variable_value speed = *(args + 2);
+				int pos_x = *args;
+				int pos_y = *(args + 1);
+				int speed = *(args + 2);
 
 				std::string mes;
 				char rec[22];
@@ -572,7 +602,7 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		case 3: {
 			if (is_Created){
 				// execute fucntion move
-				variable_value color = *args;
+				int color = *args;
 
 				std::string mes;
 				char rec[22];
@@ -591,20 +621,20 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		case 4: {
 			if (is_Created){
 				// execute fucntion move
-				//variable_value color = *args;
+				//int color = *args;
 
 				std::string mes;
-				char rec[22];
+				char rec[30];
 				// create our message
 				printf("- %s\n", "ex1");
 				mes = reqXMessage(G_UNIQ_ID, "coords", robot_index);
-				printf("- %s\n", "ex2");
+				printf("- %s\n", mes);
 				// send message to SOCKET
 				send(VR_socket, mes.c_str(), mes.length(), 0);
 				printf("- %s\n", "ex3");
 				Sleep(1500);
 				// recive message from SOCKET
-				recv(VR_socket, rec, 22, 0);
+				recv(VR_socket, rec, 30, 0);
 				Sleep(500);
 				printf("- %s\n", "ex4");
 				rez = extractX(rec);
@@ -616,7 +646,7 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		case 5: {
 			if (is_Created){
 				// execute fucntion move
-				//variable_value color = *args;
+				//int color = *args;
 
 				std::string mes;
 				char rec[22];
