@@ -82,14 +82,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Исходный код.cpp" />
+    <ClCompile Include="u3d_robot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="function_module.h" />
     <ClInclude Include="module.h" />
     <ClInclude Include="robot_module.h" />
     <ClInclude Include="SimpleIni.h" />
-    <ClInclude Include="virtual_robot.h" />
+    <ClInclude Include="u3d_robot.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
