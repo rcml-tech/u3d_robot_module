@@ -87,7 +87,6 @@
     <ClCompile Include="u3d_robot_module.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="function_module.h" />
     <ClInclude Include="messages.h" />
     <ClInclude Include="module.h" />
     <ClInclude Include="robot_module.h" />
