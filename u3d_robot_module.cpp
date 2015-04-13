@@ -20,7 +20,10 @@
 #include "module.h"
 #include "robot_module.h"
 #include "function_module.h"
-#include "u3d_robot.h"
+#include "u3d_robot_module.h"
+#include "messages.h"
+
+//#include <string.h>
 
 ////////// Опишем глобальные константы и макросы
 const unsigned int COUNT_u3dRobot_FUNCTIONS = 5;
@@ -39,7 +42,7 @@ function_id++;
 
 // Опишем макросс который все наши функции заполнит/ Добавил Функцию - Увеличивай их число COUNT_u3dRobot_FUNCTIONS. А то удалишь нафиг какой-нить процесс в памяти.
 #define DEFINE_ALL_FUNCTIONS \
-ADD_u3dRobot_FUNCTION("spawn", 5, false)\
+ADD_u3dRobot_FUNCTION("spawn", 6, false)\
 ADD_u3dRobot_FUNCTION("move", 3, false)\
 ADD_u3dRobot_FUNCTION("changeColor", 1, false)\
 ADD_u3dRobot_FUNCTION("getX", 0, false)\
@@ -59,6 +62,7 @@ ADD_ROBOT_AXIS("straight", 100, -100)\
 ADD_ROBOT_AXIS("rotation", 100, -100);
 
 
+/*
 std::string createWorldMessage(int uniq_id, int l, int w, int h){
 	std::string fir = "%%";
 	std::string plusr = "+init:";
@@ -237,81 +241,19 @@ std::string reqYMessage(int uniq_id, std::string word, int obj_id){
 	return rezult;
 };
 // Функция вытаскивающая из полученного сообщения ID объекта
+*/
+
+/*
 int extractObj_id(char *str){
-
-	int beg = 0;
-	int end = 0;
-	for (int i = 0; i < 30; i++){
-		if (*(str + i) == ':'){ beg = i+1; };
-		if (*(str + i) == '&'){ end = i; break; };
-	};
-	printf("- %s\n", " extract  works");
-
-	printf("- %d\n", beg);
-	printf("- %d\n", end);
-
-	char *cht = new char[(end - beg)];
-	printf("- %s\n", " extract works 2");
-
-	for (int i = 0; i <(end-beg); i++){
-		cht[i] =  *(str + i + beg) ;
-	};
-	//cht[j] = char(0);
-	printf("- %d\n", atoi(cht));
-
-	return atoi(cht);
+	return extractor(str,':','&');
 };
 int extractX(char *str){
-
-	int beg = 0;
-	int end = 0;
-	for (int i = 0; i < 30; i++){
-		printf("- %c\n", *(str + i));
-		if (*(str + i) == ':'){ beg = i + 1; };
-		if (*(str + i) == ','){ end = i; break; };
-	};
-	printf("- %s\n", " extract X works");
-
-	printf("- %d\n", beg);
-	printf("- %d\n", end);
-
-	char *cht = new char[(end - beg)];
-	printf("- %s\n", " extract X works 2");
-
-	for (int i = 0; i <(end - beg); i++){
-		cht[i] = *(str + i + beg);
-	};
-	//cht[j] = char(0);
-	printf("- %d\n", atoi(cht));
-
-	return atoi(cht);
+	return extractor(str, ':', ',');
 };
 int extractY(char *str){
-
-	int beg = 0;
-	int end = 0;
-	for (int i = 0; i < 30; i++){
-		printf("- %c\n", *(str + i));
-		if (*(str + i) == ','){ beg = i + 1; };
-		if (*(str + i) == '&'){ end = i; break; };
-	};
-	printf("- %s\n", " extract X works");
-
-	printf("- %d\n", beg);
-	printf("- %d\n", end);
-
-	char *cht = new char[(end - beg)];
-	printf("- %s\n", " extract X works 2");
-
-	for (int i = 0; i <(end - beg); i++){
-		cht[i] = *(str + i + beg);
-	};
-	//cht[j] = char(0);
-	printf("- %d\n", atoi(cht));
-
-	return atoi(cht);
+	return extractor(str, ',', '&');
 };
-
+*/
 
 
 // сделано!
@@ -426,6 +368,7 @@ int u3dRobotModule::init(){
 
 		Sleep(20);
 		// создаем мир
+		/*
 		std::string mes = createWorldMessage(G_UNIQ_ID, 100, 100, 100);
 		// send message to SOCKET
 		G_UNIQ_ID++;
@@ -434,7 +377,10 @@ int u3dRobotModule::init(){
 		// Сделал получение ответа после чтобы оно очередь не заьивало и всегда было доступно верное сообщение
 		char rec[22];
 		recv(VR_socket, rec, 22, 0);
-
+		*/
+		double ag[3] = { 100, 100, 100 };
+		createWorld(VR_socket, G_UNIQ_ID, ag, 3, 40);
+		G_UNIQ_ID++;
 	}
 	return 0;
 };
@@ -443,7 +389,7 @@ int u3dRobotModule::init(){
 Robot* u3dRobotModule::robotRequire(){
 	EnterCriticalSection(&VRM_cs);
 	u3dRobot *u3d_robot = new u3dRobot(robot_id);
-	aviable_connections[robot_id] = u3d_robot;
+	aviable_connections.push_back(u3d_robot);// = u3d_robot;
 	robot_id++;
 
 	u3d_robot->isAviable = false;
@@ -455,21 +401,16 @@ Robot* u3dRobotModule::robotRequire(){
 
 void u3dRobotModule::robotFree(Robot *robot){
 	EnterCriticalSection(&VRM_cs);
-	u3dRobot *u3d_robot = reinterpret_cast<u3dRobot*>(robot);
-	for (m_connections::iterator i = aviable_connections.begin(); i != aviable_connections.end(); ++i) {
-		if (i->second == u3d_robot) {
-			if (u3d_robot->is_Created){
-				u3d_robot->isAviable = true;
-				std::string mes = deleteMessage(G_UNIQ_ID, u3d_robot->robot_index);
-				// send message to SOCKET
+	//u3dRobot *u3d_robot = reinterpret_cast<u3dRobot*>(robot);
+	//for (m_connections::iterator i = aviable_connections.begin(); i != aviable_connections.end(); ++i) {
+	for (int i = 0; i < aviable_connections.size(); i++){
+		//aviable_connections[i]->
+			//if (*i->is_Created){
+				//u3d_robot->isAviable = true;
+				deleteRobot(VR_socket, G_UNIQ_ID, aviable_connections[i]->robot_index, 30);
 				G_UNIQ_ID++;
-				send(VR_socket, mes.c_str(), mes.length(), 0);
-				// Сделал получение ответа после чтобы оно очередь не заьивало и всегда было доступно верное сообщение
-				char rec[30];
-				recv(VR_socket, rec, 30, 0);
-			}
-			break;
-		}
+			
+			//break;
 	}
 	LeaveCriticalSection(&VRM_cs);
 };
@@ -479,15 +420,11 @@ void u3dRobotModule::final(){
 	//lego_communication_library::lego_brick^ singletoneBrick = lego_communication_library::lego_brick::getInstance();
 	for (m_connections::iterator i = aviable_connections.begin(); i != aviable_connections.end(); ++i) {
 		//singletoneBrick->disconnectBrick(i->second->robot_index);
-		delete i->second;
+		delete *i;
 	}
 	aviable_connections.clear();
-	std::string mes = destroyWorldMessage(G_UNIQ_ID);
+	destroyWorld(VR_socket, G_UNIQ_ID, 30);
 	G_UNIQ_ID++;
-	// send message to SOCKET
-	send(VR_socket, mes.c_str(), mes.length(), 0);
-	char rec[22];
-	recv(VR_socket, rec, 22, 0);
 };
 
 // Сделано !
@@ -551,115 +488,43 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 	try {
 		switch (functionId) {
 		case 1: {
-			//G_UNIQ_ID;
-			int pos_x = *args;
-			int pos_y = *(args + 1);
-			int d_x = *(args + 2);
-			int d_y = *(args + 3);
-			int d_z = *(args + 4);
-
-			std::string mes;
-			char rec[30];
-
-			mes = createMessage(G_UNIQ_ID, "create", pos_x, pos_y, d_x, d_y, d_z, 1);
-			// send message to SOCKET
-			printf("- %s\n", "ex1");
-			send(VR_socket, mes.c_str(), mes.length(), 0);
-			printf("- %s\n", "ex2");
-			Sleep(1500);
-			printf("- %s\n", "ex3");
-			// recive message from SOCKET
-			recv(VR_socket, rec,30, 0);
-			printf("- %s\n", rec);
-			robot_index = extractObj_id(rec);
-			printf("- %s\n", "ex5");
+			robot_index = createRobot(VR_socket,G_UNIQ_ID,0,args,6,30);
+			G_UNIQ_ID++;
 			is_Created = true;
-			printf("- %s\n", "ex6");
 			break;
 		}
 		case 2: {
 			if (is_Created){
 				// execute fucntion move
-				int pos_x = *args;
-				int pos_y = *(args + 1);
-				int speed = *(args + 2);
-
-				std::string mes;
-				char rec[22];
-				// create our message
-				printf("- %s\n", "ex1");
-				mes = moveMessage(G_UNIQ_ID, "move", robot_index, pos_x, pos_y, speed);
-				printf("- %s\n", "ex2");
-				// send message to SOCKET
-				send(VR_socket, mes.c_str(), mes.length(), 0);
-				Sleep(10);
-				// recive message from SOCKET
-				recv(VR_socket, rec, 22, 0);
+				moveRobot(VR_socket, G_UNIQ_ID, robot_index, args, 3, 30);
+				G_UNIQ_ID++;
 			}
 			else { throw std::exception(); };
 			break;
 		}
 		case 3: {
 			if (is_Created){
-				// execute fucntion move
-				int color = *args;
-
-				std::string mes;
-				char rec[22];
-				// create our message
-				mes = changecolorMessage(G_UNIQ_ID, "color", robot_index, color);
-
-				// send message to SOCKET
-				send(VR_socket, mes.c_str(), mes.length(), 0);
-				Sleep(10);
-				// recive message from SOCKET
-				recv(VR_socket, rec, 22, 0);
+				// execute fucntion change color
+				changeRobotColor(VR_socket, G_UNIQ_ID, robot_index ,args, 2, 30);
+				G_UNIQ_ID++;
 			}
 			else { throw std::exception(); };
 			break;
 		}
 		case 4: {
 			if (is_Created){
-				// execute fucntion move
-				//int color = *args;
-
-				std::string mes;
-				char rec[30];
-				// create our message
-				printf("- %s\n", "ex1");
-				mes = reqXMessage(G_UNIQ_ID, "coords", robot_index);
-				printf("- %s\n", mes);
-				// send message to SOCKET
-				send(VR_socket, mes.c_str(), mes.length(), 0);
-				printf("- %s\n", "ex3");
-				Sleep(1500);
-				// recive message from SOCKET
-				recv(VR_socket, rec, 30, 0);
-				Sleep(500);
-				printf("- %s\n", "ex4");
-				rez = extractX(rec);
-				printf("- %s\n", "ex5");
+				// execute fucntion getX
+				double temp = robot_index;
+				rez = reqRobotX(VR_socket, G_UNIQ_ID, robot_index,&temp, 1, 30);
 			}
 			else { throw std::exception(); };
 			break;
 		}
 		case 5: {
 			if (is_Created){
-				// execute fucntion move
-				//int color = *args;
-
-				std::string mes;
-				char rec[22];
-				// create our message
-				mes = reqYMessage(G_UNIQ_ID, "coords", robot_index);
-
-				// send message to SOCKET
-				send(VR_socket, mes.c_str(), mes.length(), 0);
-				Sleep(10);
-				// recive message from SOCKET
-				recv(VR_socket, rec, 22, 0);
-
-				rez = extractY(rec);
+				// execute fucntion getY
+				double temp = robot_index;
+				rez = reqRobotY(VR_socket, G_UNIQ_ID, robot_index, &temp, 1, 30);
 			}
 			else { throw std::exception(); };
 			break;
