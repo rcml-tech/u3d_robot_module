@@ -19,7 +19,7 @@ public:
 	~u3dRobot() {};
 };
 
-typedef std::map<variable_value, u3dRobot*> m_connections;
+typedef std::vector<u3dRobot*> m_connections;
 
 class u3dRobotModule : public RobotModule{
 public:

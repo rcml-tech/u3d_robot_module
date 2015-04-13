@@ -14,6 +14,7 @@
     <ProjectGuid>{CA6351F9-1412-4FC2-83C8-657319F896C0}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>virtual_robot</RootNamespace>
+    <ProjectName>u3d_robot_module</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -42,9 +43,9 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>virtual_module</TargetName>
+    <TargetName>u3drobot_module</TargetName>
     <TargetExt>.dll</TargetExt>
-    <OutDir>..\..\..\RCML\robot_modules\virtual</OutDir>
+    <OutDir>..\..\..\RCML\robot_modules\u3drobot</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -82,14 +83,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="u3d_robot.cpp" />
+    <ClCompile Include="messages.cpp" />
+    <ClCompile Include="u3d_robot_module.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="function_module.h" />
+    <ClInclude Include="messages.h" />
     <ClInclude Include="module.h" />
     <ClInclude Include="robot_module.h" />
     <ClInclude Include="SimpleIni.h" />
-    <ClInclude Include="u3d_robot.h" />
+    <ClInclude Include="u3d_robot_module.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
