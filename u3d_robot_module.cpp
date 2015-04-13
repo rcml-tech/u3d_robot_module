@@ -1,6 +1,5 @@
 
 
-
 #define _WINSOCK_DEPRECATED_NO_WARNINGS //Иначе ругается на устаревшую но удобную inet_addr
 #define _CRT_SECURE_NO_WARNINGS // Иначе рушается на wcsncpy
 #define _SCL_SECURE_NO_WARNINGS
@@ -11,7 +10,6 @@
 #include <windows.h>
 #include <time.h>
 #include <vector>
-#include <map>
 #include <string>
 
 #pragma comment(lib, "ws2_32") // Это подключение самой dll WinSock2.dll Не нужно в настройках указывать
@@ -19,17 +17,15 @@
 #include "SimpleIni.h"
 #include "module.h"
 #include "robot_module.h"
-#include "function_module.h"
 #include "u3d_robot_module.h"
 #include "messages.h"
 
-//#include <string.h>
 
 ////////// Опишем глобальные константы и макросы
 const unsigned int COUNT_u3dRobot_FUNCTIONS = 5;
 const unsigned int COUNT_AXIS = 3;
-int G_UNIQ_ID = 1; // Пришлось ввести пока Глобальную переменную чтобы были уникальные  ID процесса
-SOCKET VR_socket;
+//int G_UNIQ_ID = 1; // Пришлось ввести пока Глобальную переменную чтобы были уникальные  ID процесса
+//SOCKET VR_socket;
 
 #define ADD_u3dRobot_FUNCTION(FUNCTION_NAME, COUNT_PARAMS, GIVE_EXCEPTION) \
 u3drobot_functions[function_id] = new FunctionData; \
@@ -62,211 +58,6 @@ ADD_ROBOT_AXIS("straight", 100, -100)\
 ADD_ROBOT_AXIS("rotation", 100, -100);
 
 
-/*
-std::string createWorldMessage(int uniq_id, int l, int w, int h){
-	std::string fir = "%%";
-	std::string plusr = "+init:";
-	std::string rezult;
-
-	// Собираем наше сообщение
-	rezult.assign(fir);
-	rezult.append(std::to_string( (int) uniq_id));
-	rezult.append(plusr);
-	rezult.append(std::to_string(l));
-	rezult.append(",");
-	rezult.append(std::to_string(w));
-	rezult.append(",");
-	rezult.append(std::to_string(h));
-	rezult.append("&");
-
-	return rezult;
-};
-std::string destroyWorldMessage(int uniq_id){
-	std::string fir = "%%";
-	std::string plusr = "+destroy&";
-	std::string rezult;
-
-	// Собираем наше сообщение
-	rezult.assign(fir);
-	rezult.append(std::to_string( (int) uniq_id));
-	rezult.append(plusr);
-
-	return rezult;
-};
-
-std::string deleteMessage(int uniq_id, int obj_id){
-	std::string fir = "%%";
-	std::string plusr = "+delete:";
-	std::string rezult;
-
-	// Собираем наше сообщение
-	rezult.assign(fir);
-	rezult.append(std::to_string( (int) uniq_id));
-	rezult.append(plusr);
-	rezult.append(std::to_string(obj_id));
-	rezult.append("&");
-
-	return rezult;
-};
-std::string createMessage(int uniq_id, std::string word, int x, int y, int d_x, int d_y, int d_z, int color){
-	std::string fir = "%%";
-	std::string plusr = "+robot:";
-	std::string col;
-	std::string rezult;
-
-	switch ((int)color)
-	{
-	case 1:{
-		col = "00FF00";
-		break;
-	}
-	case 2:{
-		col = "BB0000";
-		break;
-	}
-	case 3:{
-		col = "0000AC";
-		break;
-	}
-	};
-	// Собираем наше сообщение
-	rezult.assign(fir);
-	rezult.append(std::to_string( (int) uniq_id));
-	rezult.append(plusr);
-	rezult.append(word);
-	rezult.append(",");
-	rezult.append(std::to_string(x));
-	rezult.append(",");
-	rezult.append(std::to_string(y));
-	rezult.append(",");
-	rezult.append(std::to_string(d_x));
-	rezult.append(",");
-	rezult.append(std::to_string(d_y));
-	rezult.append(",");
-	rezult.append(std::to_string(d_z));
-	rezult.append(",");
-	rezult.append(col);
-	rezult.append("&");
-	return rezult;
-};
-
-std::string moveMessage(int uniq_id, std::string word, int obj_id, int x, int y, int speed){
-	std::string fir = "%%";
-	std::string plusr = "+robot:";
-
-	std::string rezult;
-
-	// Собираем наше сообщение
-	rezult.assign(fir);
-	rezult.append(std::to_string( (int) uniq_id));
-	rezult.append(plusr);
-	rezult.append(word);
-	rezult.append(",");
-	rezult.append(std::to_string(obj_id));
-	rezult.append(",");
-	rezult.append(std::to_string(x));
-	rezult.append(",");
-	rezult.append(std::to_string(y));
-	rezult.append(",");
-	rezult.append(std::to_string(speed));
-	rezult.append("&");
-
-	return rezult;
-};
-std::string changecolorMessage(int uniq_id, std::string word, int obj_id, int color){
-	std::string fir = "%%";
-	std::string plusr = "+robot:";
-	std::string col;
-
-	std::string rezult;
-
-	switch ((int)color)
-	{
-	case 1:{
-		col = "00FF00";
-		break;
-	}
-	case 2:{
-		col = "BB0000";
-		break;
-	}
-	case 3:{
-		col = "0000AC";
-		break;
-	}
-	};
-	// Собираем наше сообщение
-	rezult.assign(fir);
-	rezult.append(std::to_string( (int) uniq_id));
-	rezult.append(plusr);
-	rezult.append(word);
-	rezult.append(",");
-	rezult.append(std::to_string(obj_id));
-	rezult.append(",");
-	rezult.append(col);
-	rezult.append("&");
-
-	return rezult;
-};
-
-std::string reqXMessage(int uniq_id, std::string word, int obj_id){
-	std::string fir = "%%";
-	std::string plusr = "+robot:";
-	std::string rezult = " 1";
-	// Собираем наше сообщение
-	rezult.assign(fir);
-	rezult.append(std::to_string( (int) uniq_id));
-	rezult.append(plusr);
-	rezult.append(word);
-	rezult.append(",");
-	rezult.append(std::to_string((int)obj_id));
-	rezult.append("&");
-
-	return rezult;
-};
-std::string reqYMessage(int uniq_id, std::string word, int obj_id){
-	std::string fir = "%%";
-	std::string plusr = "+robot:";
-	std::string rezult;
-
-	// Собираем наше сообщение
-	rezult.assign(fir);
-	rezult.append(std::to_string( (int) uniq_id));
-	rezult.append(plusr);
-	rezult.append(word);
-	rezult.append(",");
-	rezult.append(std::to_string((int)obj_id));
-	rezult.append("&");
-
-	return rezult;
-};
-// Функция вытаскивающая из полученного сообщения ID объекта
-*/
-
-/*
-int extractObj_id(char *str){
-	return extractor(str,':','&');
-};
-int extractX(char *str){
-	return extractor(str, ':', ',');
-};
-int extractY(char *str){
-	return extractor(str, ',', '&');
-};
-*/
-
-
-// сделано!
-const char* u3dRobotModule::getUID() {
-	return "u3dRobot_functions_dll";
-};
-
-// сделано!
-FunctionData** u3dRobotModule::getFunctions(unsigned int *count_functions) {
-	*count_functions = COUNT_u3dRobot_FUNCTIONS;
-	return u3drobot_functions;
-}
-
 // сделано!
 u3dRobotModule::u3dRobotModule() {
 	srand(time(NULL));
@@ -279,18 +70,21 @@ u3dRobotModule::u3dRobotModule() {
 		robot_id = 1;
 };
 
+// Сделано!
+void u3dRobotModule::prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p) {
+	colorPrintf = colorPrintf_p;
+}
+
 // сделано!
-void u3dRobotModule::destroy() {
-	for (unsigned int j = 0; j < COUNT_u3dRobot_FUNCTIONS; ++j) {
-		delete u3drobot_functions[j];
-	}
-	for (unsigned int j = 0; j < COUNT_AXIS; ++j) {
-		delete robot_axis[j];
-	}
-	delete[] u3drobot_functions;
-	delete[] robot_axis;
-	delete this;
+const char* u3dRobotModule::getUID() {
+	return "u3dRobot_functions_dll";
 };
+
+// сделано!
+FunctionData** u3dRobotModule::getFunctions(unsigned int *count_functions) {
+	*count_functions = COUNT_u3dRobot_FUNCTIONS;
+	return u3drobot_functions;
+}
 
 
 int u3dRobotModule::init(){
@@ -300,7 +94,7 @@ int u3dRobotModule::init(){
 
 	HMODULE lr_handle;
 
-	lr_handle = GetModuleHandleW(L"u3d_robot.dll");
+	lr_handle = GetModuleHandleW(L"u3drobot_module.dll");
 
 	WCHAR DllPath[MAX_PATH] = { 0 };
 
@@ -317,8 +111,8 @@ int u3dRobotModule::init(){
 	//string str;
 
 
-	if (ini.LoadFile("g:\\VSProjects\\VR_test_version\\VR_test_version\\config.ini") < 0) {
-		printf("Can't load '%s' file!\n", "g:\\VSProjects\\VR_test_version\\VR_test_version\\config.ini");
+	if (ini.LoadFile(ConfigPath) < 0) {  
+		printf("Can't load '%s' file!\n", ConfigPath);
 		return 1;
 	}
 
@@ -344,43 +138,12 @@ int u3dRobotModule::init(){
 		int port = std::stoi(ini_value->pItem);
 		//colorPrintf(this, ConsoleColor(ConsoleColor::white), "Attemp to connect: %s\n", ini_value->pItem);
 
-		// Введем переменную для tcp сокета
-		sockaddr_in addr;
 
-		addr.sin_family = AF_INET; // семейство адресов interrnet
-		addr.sin_port = htons(port); // Назначаем порт сокету
-		addr.sin_addr.S_un.S_addr = inet_addr("192.168.1.128"); // Задаем конкретный адрес //Ругается на Deprecated inet_addr. Поэтому  использую _WINSOCK_DEPRECATED_NO_WARNINGS
-
-		// теперь делаем Сокет котрый будет подключаться к нашему reciver'у
-		VR_socket = socket(PF_INET, SOCK_STREAM, 0);
-
-		u_long iMode = 1;
-		int iResult;
-		// Делаем сокеты неблокирующими
-		iResult = ioctlsocket(VR_socket, FIONBIO, &iMode);
-		if (iResult != NO_ERROR) {
-			printf("ERROR_NONBLOCK: %d", iResult);
-		}
-
-		if (connect(VR_socket, (SOCKADDR *)&addr, sizeof(addr)) != 0) {
-			//std::cout << "can't create connection" << WSAGetLastError() << "\n"; // Тут надо будет заменить на colorPrintF
-		};
-
+		initConnection(port);
 		Sleep(20);
-		// создаем мир
-		/*
-		std::string mes = createWorldMessage(G_UNIQ_ID, 100, 100, 100);
-		// send message to SOCKET
-		G_UNIQ_ID++;
-		send(VR_socket, mes.c_str(), mes.length(), 0);
-		Sleep(500);
-		// Сделал получение ответа после чтобы оно очередь не заьивало и всегда было доступно верное сообщение
-		char rec[22];
-		recv(VR_socket, rec, 22, 0);
-		*/
-		double ag[3] = { 100, 100, 100 };
-		createWorld(VR_socket, G_UNIQ_ID, ag, 3, 40);
-		G_UNIQ_ID++;
+
+		initWorld(100,100,100);
+
 	}
 	return 0;
 };
@@ -392,7 +155,6 @@ Robot* u3dRobotModule::robotRequire(){
 	aviable_connections.push_back(u3d_robot);// = u3d_robot;
 	robot_id++;
 
-	u3d_robot->isAviable = false;
 	Robot *robot = u3d_robot;
 	LeaveCriticalSection(&VRM_cs);
 	return robot;
@@ -401,31 +163,36 @@ Robot* u3dRobotModule::robotRequire(){
 
 void u3dRobotModule::robotFree(Robot *robot){
 	EnterCriticalSection(&VRM_cs);
-	//u3dRobot *u3d_robot = reinterpret_cast<u3dRobot*>(robot);
-	//for (m_connections::iterator i = aviable_connections.begin(); i != aviable_connections.end(); ++i) {
 	for (int i = 0; i < aviable_connections.size(); i++){
-		//aviable_connections[i]->
-			//if (*i->is_Created){
-				//u3d_robot->isAviable = true;
-				deleteRobot(VR_socket, G_UNIQ_ID, aviable_connections[i]->robot_index, 30);
-				G_UNIQ_ID++;
-			
-			//break;
+		if (aviable_connections[i]->is_Created){
+			deleteRobot(aviable_connections[i]->robot_index);
+			delete aviable_connections[i];
+		}
 	}
+	//destroyWorld();
 	LeaveCriticalSection(&VRM_cs);
 };
 
 
 void u3dRobotModule::final(){
-	//lego_communication_library::lego_brick^ singletoneBrick = lego_communication_library::lego_brick::getInstance();
-	for (m_connections::iterator i = aviable_connections.begin(); i != aviable_connections.end(); ++i) {
-		//singletoneBrick->disconnectBrick(i->second->robot_index);
-		delete *i;
-	}
+
 	aviable_connections.clear();
-	destroyWorld(VR_socket, G_UNIQ_ID, 30);
-	G_UNIQ_ID++;
+
 };
+
+// сделано!
+void u3dRobotModule::destroy() {
+	for (unsigned int j = 0; j < COUNT_u3dRobot_FUNCTIONS; ++j) {
+		delete u3drobot_functions[j];
+	}
+	for (unsigned int j = 0; j < COUNT_AXIS; ++j) {
+		delete robot_axis[j];
+	}
+	delete[] u3drobot_functions;
+	delete[] robot_axis;
+	delete this;
+};
+
 
 // Сделано !
 AxisData **u3dRobotModule::getAxis(unsigned int *count_axis){
@@ -473,10 +240,6 @@ void u3dRobot::axisControl(system_value axis_index, variable_value value){
 	};
 };
 
-// Сделано!
-void u3dRobotModule::prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p) {
-	colorPrintf = colorPrintf_p;
-}
 
 
 FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_value *args) {
@@ -488,16 +251,14 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 	try {
 		switch (functionId) {
 		case 1: {
-			robot_index = createRobot(VR_socket,G_UNIQ_ID,0,args,6,30);
-			G_UNIQ_ID++;
+			robot_index = std::stoi( createRobot(*args, *(args + 1), *(args + 2), *(args + 3), *(args + 4), *(args + 5)) );
 			is_Created = true;
 			break;
 		}
 		case 2: {
 			if (is_Created){
 				// execute fucntion move
-				moveRobot(VR_socket, G_UNIQ_ID, robot_index, args, 3, 30);
-				G_UNIQ_ID++;
+				moveRobot(robot_index, *args, *(args + 1), *(args + 2));
 			}
 			else { throw std::exception(); };
 			break;
@@ -505,8 +266,7 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		case 3: {
 			if (is_Created){
 				// execute fucntion change color
-				changeRobotColor(VR_socket, G_UNIQ_ID, robot_index ,args, 2, 30);
-				G_UNIQ_ID++;
+				colorRobot(robot_index, *args);
 			}
 			else { throw std::exception(); };
 			break;
@@ -514,8 +274,7 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		case 4: {
 			if (is_Created){
 				// execute fucntion getX
-				double temp = robot_index;
-				rez = reqRobotX(VR_socket, G_UNIQ_ID, robot_index,&temp, 1, 30);
+				rez = std::stoi( coordsRobotX(robot_index) );
 			}
 			else { throw std::exception(); };
 			break;
@@ -523,18 +282,15 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		case 5: {
 			if (is_Created){
 				// execute fucntion getY
-				double temp = robot_index;
-				rez = reqRobotY(VR_socket, G_UNIQ_ID, robot_index, &temp, 1, 30);
+				rez = std::stoi(coordsRobotY(robot_index));
 			}
 			else { throw std::exception(); };
 			break;
 		}
 		};
-		G_UNIQ_ID++;
 		return new FunctionResult(1, rez);
 	}
 	catch (...){
-		G_UNIQ_ID++;
 		return new FunctionResult(0);
 	};
 };

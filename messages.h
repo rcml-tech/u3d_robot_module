@@ -2,6 +2,9 @@
 #include <WinSock2.h>
 //#pragma comment(lib, "ws2_32")
 
+void initConnection(int Port);
+
+
 // Вырезает число из char строки
 int extractor(char *str, char first, char second);
 
@@ -9,29 +12,18 @@ int extractObj_id(char *str);
 int extractX(char *str);
 int extractY(char *str);
 
+void testSuccess(char *str);
+char *message(std::string name, std::string params);
 
 
-// Отправляет и получает сообщение из сокета
-char *sendAndRec(SOCKET SR, char *mes, int chrec);
-// Выбирает цвет из нескольких вариантов
-char *chooseColor(double arg);
-// создает строку из аргументов
-char *crtParamSrting(double *args, int numArgs);
-// Создает сообщение
-char *crtSendSrting(int uniq_id, char *name, char *word, double *args, int numArgs);
+std::string initWorld(int x, int y, int z);
+std::string destroyWorld();
 
-int messagePart(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes, char *fname, char *fword);
+std::string createRobot(int x, int y, int d_x, int d_y, int d_z, int color);
+std::string deleteRobot(int obj_id);
 
-void createWorld(SOCKET SR, int uniq_id, double *args, int numArgs, int rcBytes);
-void destroyWorld(SOCKET SR, int uniq_id, int rcBytes);
+std::string moveRobot(int obj_id, int x, int y, int speed);
+std::string colorRobot(int obj_id, int color);
 
-int createRobot(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes);
-void deleteRobot(SOCKET SR, int uniq_id, int obj_id, int rcBytes);
-
-int        moveRobot(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes);
-int changeRobotColor(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes);
-
-int reqRobotX(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes);
-int reqRobotY(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes);
-
-int universalRobotMessage(SOCKET SR, int uniq_id, double *args, int numArgs, int rcBytes, char *fname, char *fword);
+std::string coordsRobotX(int obj_id);
+std::string coordsRobotY(int obj_id);

@@ -6,6 +6,34 @@
 // В этом файле будем описывать универсальные функции с которыми в дальнейшем смогут работать другие программы
 
 
+SOCKET SaR;
+
+
+void initConnection(int Port){
+	sockaddr_in addr;
+
+	addr.sin_family = AF_INET; // семейство адресов interrnet
+	addr.sin_port = htons(Port); // Назначаем порт сокету
+	addr.sin_addr.S_un.S_addr = inet_addr("192.168.1.128"); // Задаем конкретный адрес //Ругается на Deprecated inet_addr. Поэтому  использую _WINSOCK_DEPRECATED_NO_WARNINGS
+
+	// теперь делаем Сокет котрый будет подключаться к нашему reciver'у
+	SaR = socket(PF_INET, SOCK_STREAM, 0);
+
+	u_long iMode = 1;
+	int iResult;
+	// Делаем сокеты неблокирующими
+	iResult = ioctlsocket(SaR, FIONBIO, &iMode);
+	if (iResult != NO_ERROR) {
+		printf("ERROR_NONBLOCK: %d", iResult);
+	}
+
+	if (connect(SaR, (SOCKADDR *)&addr, sizeof(addr)) != 0) {
+		//std::cout << "can't create connection" << WSAGetLastError() << "\n"; // Тут надо будет заменить на colorPrintF
+	};
+
+
+};
+
 
 // Вырезает число из char строки
 int extractor(char *str, char first, char second){
@@ -35,23 +63,6 @@ int extractY(char *str){
 	return extractor(str, ',', '&');
 };
 
-
-// 
-char *sendAndRec(SOCKET SR, char *mes, int chrec){
-	char *rec = new char[chrec];
-	*rec = { 0 };
-	//Send message to socket
-	std::string temp(mes);
-
-	//send(SR, mes, strlen(mes), 0);
-	send(SR, temp.c_str(), temp.length() , 0);
-	int tmp = strlen(mes); // для отладки
-	Sleep(1500);
-	// recive message from SOCKET
-	recv(SR, rec, chrec, 0);
-	return rec;
-};
-
 // Выбирает цвет из нескольких вариантов
 char* chooseColor(double arg){
 	switch ((int)arg){
@@ -63,177 +74,169 @@ char* chooseColor(double arg){
 	}
 };
 
-// создает строку из аргументов
-char *crtParamSrting(double *args, int numArgs){
-	char temp[20] = {0};
-	char arg[20] = {0};
 
-	for (int i = 0; i < numArgs; i++){
-		_itoa((int)*(args+i), arg, 10);
-		strcat(temp, ",");
-		strcat(temp, arg);
+void testSuccess(char *str){
+	if (strstr(str, "fail")) {
+		throw std::exception();
 	}
-	return temp;
 };
 
-char *objIdToString(int id){
-	char temp[20] = { 0 };
-	char arg[20] = { 0 };
+char *message(std::string name, std::string params){
 
-	if (id !=0) {
-		_itoa(id, arg, 10);
-		strcat(temp, ",");
-		strcat(temp, arg);
-	}
-	return temp;
-};
+		static int UNIC_ID=0;
+		UNIC_ID++;
+		char *rec = new char[60];
+		std::string temp = "%%" + std::to_string(UNIC_ID) + "+" + name + params + "&";
 
+		send(SaR, temp.c_str(), temp.length(), 0);
+		Sleep(1500);
+		recv(SaR,rec, 60, 0);
 
+		testSuccess(rec);
 
-// Создает сообщение
-char *crtSendSrting(int uniq_id, char *name, char *word, int obj_id, double *args, int numArgs){
-	char perc[3] = "%%";
-	char plus[2] = "+";
-	char dots[2] = ":";
-	char amper[2] = "&";
-
-
-	char uniq[10];
-	_itoa(uniq_id,uniq, 10);
-
-	char *temp = new char[60];
-	*temp = {0};
-	//char *tp="";
-
-	strcat(temp, perc);
-	strcat(temp, uniq);
-	strcat(temp, plus);
-	strcat(temp, name);
-	if (!strcmp(name, "destroy")) {
-		strcat(temp, amper);
-		return temp;
-	}
-	strcat(temp, dots);
-	strcat(temp, word);
-	if (!strcmp(name, "delete")) {
-		strcat(temp, objIdToString(obj_id)+1);
-		strcat(temp, amper);
-		return temp;
-	}
-	strcat(temp, objIdToString(obj_id));
-	// В этом меесте надо свитч который решит в зависимости от какого word что делать с цветом
-	if (!strcmp(word, "color") || !strcmp(word, "create")){
-		strcat(temp, crtParamSrting(args, numArgs-1));
-		char *color = chooseColor(*(args+numArgs-1));
-		strcat(temp, ",");
-		strcat(temp, color);
-	}
-	else
-	{   // Это для того чтобы от запятой избавиться в определенных случаях
-		if (!strcmp(name ,"delete") || !strcmp(name, "init")){
-			char *t = crtParamSrting(args, numArgs);
-			strcat(temp, t+1);
-		}
-		else{
-			strcat(temp, crtParamSrting(args, numArgs));
-		}
-
-	}
-	strcat(temp, amper);
-
-	return temp;
-};
-
-int messagePart(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes, char *fname, char *fword){
-	
-	char *sndstr = crtSendSrting(uniq_id, fname, fword, obj_id, args, numArgs);
-	char *rec;// = new char[rcBytes];
-	rec = NULL;
-	//char rec[60] = {0};
-	rec = sendAndRec(SR, sndstr, rcBytes); // получили сообщение
-	int tmp;
-	if (!strcmp(fname, "init") || !strcmp(fname, "destroy") || !strcmp(fword, "move") || !strcmp(fword, "color") || !strcmp(fword, "move")) {
-		tmp = 0;
-	}
-	else {
-		tmp = extractObj_id(rec);
-	};
-	//delete[] rec;
-	return tmp;
+		return rec;
 };
 
 
-void createWorld(SOCKET SR,int uniq_id, double *args,int numArgs, int rcBytes){
-	char fname[5] = "init";
-	char fword[1] = "";
-	int tmp = messagePart(SR, uniq_id, 0, args, numArgs, rcBytes, fname, fword);
-};
-void destroyWorld(SOCKET SR, int uniq_id, int rcBytes){
-	char *fname = "destroy";
-	char *fword = "";
-	double *tmp = 0;
-	int temp = messagePart(SR, uniq_id,0, tmp, 0, rcBytes, fname, fword);
-};
+// for DELETE
+std::string deleteRobot( int obj_id){
+	std::string params("");
 
-// return robot's ID
-int createRobot(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes){
-	char *fname = "robot";
-	char *fword = "create";
-	int tmp = messagePart(SR, uniq_id, 0, args, numArgs, rcBytes, fname, fword);
-	return tmp;
-};
-void deleteRobot(SOCKET SR, int uniq_id, int obj_id, int rcBytes){
-	char *fname = "delete";
-	char *fword = "";
-	double *tmp = 0;
-	int temp = messagePart(SR, uniq_id, obj_id, tmp, 0, rcBytes, fname, fword);
+	params.append(":");
+	params.append(std::to_string(obj_id));
+
+	char *temp;
+	temp = message("delete", params);
+	std::string st(temp);
+	return st;
 };
 
-
-int moveRobot(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes){
-	char *fname = "robot";
-	char *fword = "move";
-	int tmp = messagePart(SR, uniq_id, obj_id, args, numArgs, rcBytes, fname, fword);
-	return tmp;
-};
-int changeRobotColor(SOCKET SR, int obj_id, int uniq_id, double *args, int numArgs, int rcBytes){
-	char *fname = "robot";
-	char *fword = "color";
-	int tmp = messagePart(SR, uniq_id, obj_id, args, numArgs, rcBytes, fname, fword);
-	return tmp;
+// for DESTROY
+std::string destroyWorld(){
+	char *temp;
+	temp = message("destroy", "");
+	std::string st(temp);
+	return st;
 };
 
-int reqRobotX(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes){
-	char *fname = "robot";
-	char *fword = "coords";
+// for INIT
+std::string initWorld( int x, int y, int z){
+	std::string params("");
 
-	// создадим сообщение
-	char *sndstr = crtSendSrting(uniq_id, fname, fword, obj_id, args, numArgs);
-	char *rec;// = new char[rcBytes];
-	rec = NULL;
-	rec = sendAndRec(SR, sndstr, rcBytes); // получили сообщение
-	int tmp = extractX(rec);
-	//delete[] rec;
-	return tmp;
-};
-int reqRobotY(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes){
-	char *fname = "robot";
-	char *fword = "coords";
+	params.append(":");
+	params.append(std::to_string(x));
+	params.append(",");
+	params.append(std::to_string(y));
+	params.append(",");
+	params.append(std::to_string(z));
 
-	// создадим сообщение
-	char *sndstr = crtSendSrting(uniq_id, fname, fword, obj_id, args, numArgs);
-	char *rec;// = new char[rcBytes];
-	rec = NULL;
-	rec = sendAndRec(SR, sndstr, rcBytes); // получили сообщение
-	int tmp = extractY(rec);
-	//delete[] rec;
-	return tmp;
+	char *temp;
+	temp = message("init", params);
+	std::string st(temp);
+	return st;
 };
 
+// for CREATE
+std::string createRobot( int x, int y, int d_x, int d_y, int d_z, int color){
+	std::string params("");
 
-// для create,move,ch_color , createWorld, destroy, delete_obj
-int universalRobotMessage(SOCKET SR, int uniq_id, int obj_id, double *args, int numArgs, int rcBytes, char *fname, char *fword)
-{
-	int tmp = messagePart(SR, uniq_id, obj_id, args, numArgs, rcBytes, fname, fword);
-	return tmp;
-}
+	params.append(":");
+	params.append("create");
+	params.append(",");
+	params.append(std::to_string(x));
+	params.append(",");
+	params.append(std::to_string(y));
+	params.append(",");
+	params.append(std::to_string(d_x));
+	params.append(",");
+	params.append(std::to_string(d_y));
+	params.append(",");
+	params.append(std::to_string(d_z));
+	params.append(",");
+	params.append(chooseColor(color));
+
+	char *temp;
+	temp = message("robot", params);
+
+	int i = extractObj_id(temp);
+
+	std::string st(std::to_string(i));
+	return st;
+};
+
+// for COLOR
+std::string colorRobot(int obj_id, int color){
+	std::string params("");
+
+	params.append(":");
+	params.append("color");
+	params.append(",");
+	params.append(std::to_string(obj_id));
+	params.append(",");
+	params.append(chooseColor(color));
+
+	char *temp;
+	temp = message("robot", params);
+	std::string st(temp);
+	return st;
+};
+
+// for MOVE
+std::string moveRobot( int obj_id, int x, int y, int speed){
+	std::string params("");
+
+	params.append(":");
+	params.append("move");
+	params.append(",");
+	params.append(std::to_string(obj_id));
+	params.append(",");
+	params.append(std::to_string(x));
+	params.append(",");
+	params.append(std::to_string(y));
+	params.append(",");
+	params.append(std::to_string(speed));
+
+	char *temp;
+	temp = message("robot", params);
+	std::string st(temp);
+	return st;
+};
+
+// for COORDS
+std::string coordsRobotX(int obj_id){
+	std::string params("");
+
+	params.append(":");
+	params.append("coords");
+	params.append(",");
+	params.append(std::to_string(obj_id));
+
+	char *temp;
+	temp = message("robot", params);
+
+	int i = extractY(temp);
+	std::string st(std::to_string(i));
+	return st;
+};
+// for COORDS
+std::string coordsRobotY(int obj_id){
+	std::string params("");
+
+	params.append(":");
+	params.append("coords");
+	params.append(",");
+	params.append(std::to_string(obj_id));
+
+	char *temp;
+	temp = message("robot", params);
+
+	int i = extractY(temp);
+	std::string st(std::to_string(i));
+	return st;
+};
+
+
+
+
+
+

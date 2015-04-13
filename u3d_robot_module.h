@@ -8,12 +8,11 @@
 class u3dRobot : public Robot {
 public:
 	variable_value robot_index;
-	bool isAviable;
 	bool is_locked;
 	bool is_Created;
 
 	std::vector<variable_value> axis_state;
-	u3dRobot(int robot_index) : robot_index(robot_index), isAviable(true), is_Created(false), is_locked(false){}
+	u3dRobot(int robot_index) : robot_index(robot_index), is_Created(false), is_locked(false){}
 	FunctionResult* executeFunction(system_value command_index, variable_value *args);
 	void axisControl(system_value axis_index, variable_value value);
 	~u3dRobot() {};
