@@ -53,14 +53,31 @@ int extractor(char *str, char first, char second){
 
 };
 
-int extractObj_id(char *str){
-	return extractor(str, ':', '&');
+int extractString(std::string str, char first, char second){
+
+	std::string temp("");
+
+	int beg = 0;
+	int end = 0;
+
+	beg = str.find(first) + 1;
+	end = str.find(second);
+
+	temp.assign(str, beg, end - beg);
+	
+	return std::stoi(temp);
 };
-int extractX(char *str){
-	return extractor(str, ':', ',');
+
+
+
+int extractObj_id(std::string str){
+	return extractString(str, ':', '&');
 };
-int extractY(char *str){
-	return extractor(str, ',', '&');
+int extractX(std::string str){
+	return extractString(str, ':', ',');
+};
+int extractY(std::string str){
+	return extractString(str, ',', '&');
 };
 
 // Выбирает цвет из нескольких вариантов
@@ -81,11 +98,11 @@ void testSuccess(char *str){
 	}
 };
 
-char *message(std::string name, std::string params){
+std::string message(std::string name, std::string params){
 
 		static int UNIC_ID=0;
 		UNIC_ID++;
-		char *rec = new char[60];
+		char rec[60];
 		std::string temp = "%%" + std::to_string(UNIC_ID) + "+" + name + params + "&";
 
 		send(SaR, temp.c_str(), temp.length(), 0);
@@ -93,8 +110,8 @@ char *message(std::string name, std::string params){
 		recv(SaR,rec, 60, 0);
 
 		testSuccess(rec);
-
-		return rec;
+		std::string str(rec);
+		return str;
 };
 
 
@@ -105,7 +122,7 @@ std::string deleteRobot( int obj_id){
 	params.append(":");
 	params.append(std::to_string(obj_id));
 
-	char *temp;
+	std::string temp;
 	temp = message("delete", params);
 	std::string st(temp);
 	//delete[] temp;
@@ -114,7 +131,7 @@ std::string deleteRobot( int obj_id){
 
 // for DESTROY
 std::string destroyWorld(){
-	char *temp;
+	std::string temp;
 	temp = message("destroy", "");
 	std::string st(temp);
 	return st;
@@ -131,7 +148,7 @@ std::string initWorld( int x, int y, int z){
 	params.append(",");
 	params.append(std::to_string(z));
 
-	char *temp;
+	std::string temp;
 	temp = message("init", params);
 	std::string st(temp);
 	return st;
@@ -156,7 +173,7 @@ std::string createRobot( int x, int y, int d_x, int d_y, int d_z, int color){
 	params.append(",");
 	params.append(chooseColor(color));
 
-	char *temp;
+	std::string temp;
 	temp = message("robot", params);
 
 	int i = extractObj_id(temp);
@@ -176,7 +193,7 @@ std::string colorRobot(int obj_id, int color){
 	params.append(",");
 	params.append(chooseColor(color));
 
-	char *temp;
+	std::string temp;
 	temp = message("robot", params);
 	std::string st(temp);
 	return st;
@@ -197,7 +214,7 @@ std::string moveRobot( int obj_id, int x, int y, int speed){
 	params.append(",");
 	params.append(std::to_string(speed));
 
-	char *temp;
+	std::string temp;
 	temp = message("robot", params);
 	std::string st(temp);
 	return st;
@@ -212,7 +229,7 @@ std::string coordsRobotX(int obj_id){
 	params.append(",");
 	params.append(std::to_string(obj_id));
 
-	char *temp;
+	std::string temp;
 	temp = message("robot", params);
 
 	int i = extractY(temp);
@@ -228,7 +245,7 @@ std::string coordsRobotY(int obj_id){
 	params.append(",");
 	params.append(std::to_string(obj_id));
 
-	char *temp;
+	std::string temp;
 	temp = message("robot", params);
 
 	int i = extractY(temp);

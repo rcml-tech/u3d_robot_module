@@ -8,12 +8,15 @@ void initConnection(int Port);
 // Вырезает число из char строки
 int extractor(char *str, char first, char second);
 
-int extractObj_id(char *str);
-int extractX(char *str);
-int extractY(char *str);
+int extractString(std::string str, char first, char second);
+
+
+int extractObj_id(std::string str);
+int extractX(std::string str);
+int extractY(std::string str);
 
 void testSuccess(char *str);
-char *message(std::string name, std::string params);
+std::string message(std::string name, std::string params);
 
 
 std::string initWorld(int x, int y, int z);
