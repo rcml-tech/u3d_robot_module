@@ -108,6 +108,7 @@ std::string deleteRobot( int obj_id){
 	char *temp;
 	temp = message("delete", params);
 	std::string st(temp);
+	//delete[] temp;
 	return st;
 };
 
