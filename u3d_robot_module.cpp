@@ -118,24 +118,12 @@ Robot* u3dRobotModule::robotRequire(){
 void u3dRobotModule::robotFree(Robot *robot){
 	EnterCriticalSection(&VRM_cs);
 	u3dRobot *u3d_robot = reinterpret_cast<u3dRobot*>(robot);
-	/*for (m_connections::iterator i = aviable_connections.begin(); i != aviable_connections.end(); ++i) {
-		if (u3d_robot == *i){
-			if ((*i)->is_Created){
-				deleteRobot((*i)->robot_index);
-				delete (*i);
-				LeaveCriticalSection(&VRM_cs);
-				break;
-			};
-		};
-	}
-	*/
 	for (int i = 0; i < aviable_connections.size();  ++i) {
 		if (u3d_robot == aviable_connections[i]){
 			if (aviable_connections[i]->is_Created){
 				deleteRobot(aviable_connections[i]->robot_index);
 				delete (aviable_connections[i]);
 				aviable_connections[i] = NULL;
-				//LeaveCriticalSection(&VRM_cs);
 				break;
 			};
 		};
