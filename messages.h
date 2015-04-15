@@ -15,7 +15,7 @@ double extractX(std::string str);
 double extractY(std::string str);
 
 void testSuccess(char *str);
-std::string createMessage(std::string name, std::string params);
+std::string createMessage(std::string params);
 
 void initWorld(int x, int y, int z);
 void destroyWorld();

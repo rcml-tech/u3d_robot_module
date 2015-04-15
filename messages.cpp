@@ -111,13 +111,13 @@ void testSuccess(char *str){
 	}
 };
 
-std::string createMessage(std::string name, std::string params){
+std::string createMessage(std::string params){
 
 	static int UNIC_ID = 0;
 	UNIC_ID++;
 
 	char rec[60];
-	std::string temp = "%%" + std::to_string(UNIC_ID) + "+" + name + params + "&";
+	std::string temp = "%%" + std::to_string(UNIC_ID) + "+"  + params + "&";
 
 	send(SaR, temp.c_str(), temp.length(), 0);
 	int i = temp.length();
@@ -132,22 +132,22 @@ std::string createMessage(std::string name, std::string params){
 
 // for DELETE
 void deleteRobot(int obj_id){
-	std::string params("");
+	std::string params("delete");
 
 	params.append(":");
 	params.append(std::to_string((int)obj_id));
 
-	createMessage("delete", params);
+	createMessage(params);
 };
 
 // for DESTROY
 void destroyWorld(){
-	createMessage("destroy", "");
+	createMessage("destroy");
 };
 
 // for INIT
 void initWorld(int x, int y, int z){
-	std::string params("");
+	std::string params("init");
 
 	params.append(":");
 	params.append(std::to_string(x));
@@ -156,12 +156,12 @@ void initWorld(int x, int y, int z){
 	params.append(",");
 	params.append(std::to_string(z));
 
-	createMessage("init", params);
+	createMessage(params);
 };
 
 // for CREATE
 double createRobot(int x, int y, int d_x, int d_y, int d_z, int color){
-	std::string params("");
+	std::string params("robot");
 
 	params.append(":");
 	params.append("create");
@@ -179,7 +179,7 @@ double createRobot(int x, int y, int d_x, int d_y, int d_z, int color){
 	params.append(chooseColor(color));
 
 	std::string temp;
-	temp = createMessage("robot", params);
+	temp = createMessage(params);
 
 	double d = extractObj_id(temp);
 	return d;
@@ -187,7 +187,7 @@ double createRobot(int x, int y, int d_x, int d_y, int d_z, int color){
 
 // for COLOR
 void colorRobot(int obj_id, int color){
-	std::string params("");
+	std::string params("robot");
 
 	params.append(":");
 	params.append("color");
@@ -196,12 +196,12 @@ void colorRobot(int obj_id, int color){
 	params.append(",");
 	params.append(chooseColor(color));
 
-	createMessage("robot", params);
+	createMessage(params);
 };
 
 // for MOVE
 void moveRobot(int obj_id, int x, int y, int speed){
-	std::string params("");
+	std::string params("robot");
 
 	params.append(":");
 	params.append("move");
@@ -214,12 +214,12 @@ void moveRobot(int obj_id, int x, int y, int speed){
 	params.append(",");
 	params.append(std::to_string(speed));
 
-	createMessage("robot", params);
+	createMessage(params);
 };
 
 // for COORDS
 double coordsRobotX(int obj_id){
-	std::string params("");
+	std::string params("robot");
 
 	params.append(":");
 	params.append("coords");
@@ -227,14 +227,14 @@ double coordsRobotX(int obj_id){
 	params.append(std::to_string(obj_id));
 
 	std::string temp;
-	temp = createMessage("robot", params);
+	temp = createMessage(params);
 
 	double d = extractObj_id(temp);
 	return d;
 };
 // for COORDS
 double coordsRobotY(int obj_id){
-	std::string params("");
+	std::string params("robot");
 
 	params.append(":");
 	params.append("coords");
@@ -242,7 +242,7 @@ double coordsRobotY(int obj_id){
 	params.append(std::to_string(obj_id));
 
 	std::string temp;
-	temp = createMessage("robot", params);
+	temp = createMessage(params);
 
 	double d = extractObj_id(temp);
 	return d;

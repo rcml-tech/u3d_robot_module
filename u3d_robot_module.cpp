@@ -16,7 +16,7 @@
 #include "SimpleIni.h"
 #include "module.h"
 #include "robot_module.h"
-#include "u3drobot_module.h"
+#include "u3d_robot_module.h"
 #include "messages.h"
 
 
@@ -127,6 +127,7 @@ void u3dRobotModule::robotFree(Robot *robot){
 				deleteRobot((*i)->robot_index);
 			};
 			delete (*i);
+			aviable_connections.erase(i);
 			break;
 		};
 	}
@@ -150,6 +151,7 @@ void u3dRobotModule::destroy() {
 
 
 AxisData **u3dRobotModule::getAxis(unsigned int *count_axis){
+	count_axis = COUNT_AXIS;
 	return NULL;
 };
 
