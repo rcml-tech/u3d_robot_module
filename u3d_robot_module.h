@@ -1,5 +1,5 @@
 /*
-* File: lego_module.h
+* File: u3drobot_module.h
 * Author: m79lol, iskinmike
 *
 */
@@ -9,10 +9,9 @@ class u3dRobot : public Robot {
 public:
 	variable_value robot_index;
 	bool is_locked;
-	bool is_Created;
 
 	std::vector<variable_value> axis_state;
-	u3dRobot(int robot_index) : robot_index(robot_index), is_Created(false), is_locked(false){}
+	u3dRobot(int robot_index) : robot_index(robot_index), is_locked(false){}
 	FunctionResult* executeFunction(system_value command_index, variable_value *args);
 	void axisControl(system_value axis_index, variable_value value);
 	~u3dRobot() {};
@@ -23,7 +22,6 @@ typedef std::vector<u3dRobot*> m_connections;
 class u3dRobotModule : public RobotModule{
 public:
 	CRITICAL_SECTION VRM_cs;
-	variable_value robot_id;
 	m_connections aviable_connections;
 	FunctionData **u3drobot_functions;
 	AxisData **robot_axis;

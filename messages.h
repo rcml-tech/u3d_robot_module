@@ -1,8 +1,10 @@
-#include <string>
-#include <WinSock2.h>
-#pragma comment(lib, "ws2_32");
+/*
+* File: messages.h
+* Author: m79lol, iskinmike
+*
+*/
 
-void initConnection(int Port);
+void initConnection(int Port, std::string IP);
 void closeSocketConnection();
 
 double extractString(std::string str, char first, char second);
@@ -13,8 +15,7 @@ double extractX(std::string str);
 double extractY(std::string str);
 
 void testSuccess(char *str);
-std::string message(std::string name, std::string params);
-
+std::string createMessage(std::string name, std::string params);
 
 void initWorld(int x, int y, int z);
 void destroyWorld();

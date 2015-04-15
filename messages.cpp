@@ -1,15 +1,22 @@
-#define _WINSOCK_DEPRECATED_NO_WARNINGS //Иначе ругается на устаревшую но удобную inet_addr
-#define _CRT_SECURE_NO_WARNINGS // Иначе рушается на wcsncpy
+/*
+* File: messages.cpp
+* Author: m79lol, iskinmike
+*
+*/
+
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 
+#define _CRT_SECURE_NO_WARNINGS 
 #define _SCL_SECURE_NO_WARNINGS
 
+#include <string>
 #include "messages.h"
-// В этом файле будем описывать универсальные функции с которыми в дальнейшем смогут работать другие программы
+#include <WinSock2.h>
+#pragma comment(lib, "ws2_32") //link to dll
 
 SOCKET SaR;
 
-void initConnection(int Port){
+void initConnection(int Port, std::string IP){
 
-	// теперь начнем создавать наши подключения
 	WSADATA w;
 	int error = WSAStartup(0x0202, &w);
 
@@ -23,17 +30,15 @@ void initConnection(int Port){
 
 	sockaddr_in addr;
 
-	addr.sin_family = AF_INET; // семейство адресов interrnet
-	addr.sin_port = htons(Port); // Назначаем порт сокету
-	addr.sin_addr.S_un.S_addr = inet_addr("192.168.1.4"); // Задаем конкретный адрес //Ругается на Deprecated inet_addr. Поэтому  использую _WINSOCK_DEPRECATED_NO_WARNINGS
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(Port);
+	addr.sin_addr.S_un.S_addr = inet_addr(IP.c_str());
 
-	// теперь делаем Сокет котрый будет подключаться к нашему reciver'у
 	SaR = socket(PF_INET, SOCK_STREAM, 0);
-
 
 	u_long iMode = 1;
 	int iResult;
-	// Делаем сокеты неблокирующими
+
 	iResult = ioctlsocket(SaR, FIONBIO, &iMode);
 	if (iResult != NO_ERROR) {
 		printf("ERROR_NONBLOCK: %d", iResult);
@@ -42,12 +47,10 @@ void initConnection(int Port){
 	Sleep(1000);
 
 	if (connect(SaR, (SOCKADDR *)&addr, sizeof(addr)) != 0) {
-		//std::cout << "can't create connection" << WSAGetLastError() << "\n"; // Тут надо будет заменить на colorPrintF
 		//printf("ERROR can't connect: %d", GetLastError());
 	};
 	Sleep(1000);
 };
-
 
 // Close Connection
 void closeSocketConnection(){
@@ -66,10 +69,9 @@ double extractString(std::string str, char first, char second){
 	end = str.find(second);
 
 	temp.assign(str, beg, end - beg);
-	
+
 	return std::stod(temp);
 };
-
 
 double extractObj_id(std::string str){
 	return extractString(str, ':', '&');
@@ -81,7 +83,6 @@ double extractY(std::string str){
 	return extractString(str, ',', '&');
 };
 
-// Выбирает цвет из нескольких вариантов
 char* chooseColor(double arg){
 	switch ((int)arg){
 	case 1:  {return "00FF00"; }
@@ -110,44 +111,42 @@ void testSuccess(char *str){
 	}
 };
 
-std::string message(std::string name, std::string params){
+std::string createMessage(std::string name, std::string params){
 
-		static int UNIC_ID=0;
-		UNIC_ID++;
+	static int UNIC_ID = 0;
+	UNIC_ID++;
 
-		char rec[60];
-		std::string temp = "%%" + std::to_string(UNIC_ID) + "+" + name + params + "&";
+	char rec[60];
+	std::string temp = "%%" + std::to_string(UNIC_ID) + "+" + name + params + "&";
 
-		send(SaR, temp.c_str(), temp.length(), 0);
-		Sleep(2000);
-		recv(SaR,rec, 60, 0);
+	send(SaR, temp.c_str(), temp.length(), 0);
+	int i = temp.length();
+	Sleep(1000);
+	recv(SaR, rec, 60, 0);
 
-		//testSuccess(rec);
-		std::string str(rec);
-		return str;
+	testSuccess(rec);
+	std::string str(rec);
+	return str;
 };
 
 
 // for DELETE
-void deleteRobot( int obj_id){
+void deleteRobot(int obj_id){
 	std::string params("");
 
 	params.append(":");
 	params.append(std::to_string((int)obj_id));
 
-	std::string temp;
-	temp = message("delete", params);
-
+	createMessage("delete", params);
 };
 
 // for DESTROY
 void destroyWorld(){
-	std::string temp;
-	temp = message("destroy", "");
+	createMessage("destroy", "");
 };
 
 // for INIT
-void initWorld( int x, int y, int z){
+void initWorld(int x, int y, int z){
 	std::string params("");
 
 	params.append(":");
@@ -157,12 +156,11 @@ void initWorld( int x, int y, int z){
 	params.append(",");
 	params.append(std::to_string(z));
 
-	std::string temp;
-	temp = message("init", params);
+	createMessage("init", params);
 };
 
 // for CREATE
-double createRobot( int x, int y, int d_x, int d_y, int d_z, int color){
+double createRobot(int x, int y, int d_x, int d_y, int d_z, int color){
 	std::string params("");
 
 	params.append(":");
@@ -181,7 +179,7 @@ double createRobot( int x, int y, int d_x, int d_y, int d_z, int color){
 	params.append(chooseColor(color));
 
 	std::string temp;
-	temp = message("robot", params);
+	temp = createMessage("robot", params);
 
 	double d = extractObj_id(temp);
 	return d;
@@ -198,12 +196,11 @@ void colorRobot(int obj_id, int color){
 	params.append(",");
 	params.append(chooseColor(color));
 
-	std::string temp;
-	temp = message("robot", params);
+	createMessage("robot", params);
 };
 
 // for MOVE
-void moveRobot( int obj_id, int x, int y, int speed){
+void moveRobot(int obj_id, int x, int y, int speed){
 	std::string params("");
 
 	params.append(":");
@@ -217,9 +214,7 @@ void moveRobot( int obj_id, int x, int y, int speed){
 	params.append(",");
 	params.append(std::to_string(speed));
 
-	std::string temp;
-	temp = message("robot", params);
-
+	createMessage("robot", params);
 };
 
 // for COORDS
@@ -232,7 +227,7 @@ double coordsRobotX(int obj_id){
 	params.append(std::to_string(obj_id));
 
 	std::string temp;
-	temp = message("robot", params);
+	temp = createMessage("robot", params);
 
 	double d = extractObj_id(temp);
 	return d;
@@ -247,14 +242,9 @@ double coordsRobotY(int obj_id){
 	params.append(std::to_string(obj_id));
 
 	std::string temp;
-	temp = message("robot", params);
+	temp = createMessage("robot", params);
 
 	double d = extractObj_id(temp);
 	return d;
 };
-
-
-
-
-
 
