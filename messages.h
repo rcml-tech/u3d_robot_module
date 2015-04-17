@@ -9,10 +9,17 @@ void closeSocketConnection();
 
 double extractString(std::string str, char first, char second);
 
+unsigned int PostmanThread(); //Thread
+
+int getUniqId();
 
 double extractObj_id(std::string str);
 double extractX(std::string str);
 double extractY(std::string str);
+std::string extractMessage(std::string str);
+int extractUniq_Id(std::string str);
+
+
 
 void testSuccess(char *str);
 std::string createMessage(std::string params);
