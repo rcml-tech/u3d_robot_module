@@ -234,6 +234,7 @@ std::string createMessage(std::string params){
 	LeaveCriticalSection(&G_CS_MES); 
 
 	WaitForSingleObject(WaitRecivedMessage, INFINITE);
+	CloseHandle(WaitRecivedMessage);
 
 	testStringSuccess(pairParams.second);
 	return pairParams.second;
