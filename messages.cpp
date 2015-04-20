@@ -14,6 +14,7 @@
 #include <windows.h>
 #include <process.h>
 #include <map>
+#include <vector>
 #pragma comment(lib, "ws2_32") //link to dll
 
 SOCKET SaR;
@@ -22,11 +23,12 @@ CRITICAL_SECTION G_CS_MES;
 
 bool Postman_Thread_Exist = true; // Global Variable to Colose Postman Thread
 
-//std::map<HANDLE*, std::string> tempMap;
 std::map<int, std::map<HANDLE*, std::string>>  MutualMap;
 
+std::vector<std::pair<HANDLE*, std::string> *> BoxOfMessages;
+
 int getUniqId(){
-	static int uniq_id = 0;
+	static int uniq_id = 1;
 	return uniq_id++;
 };
 
@@ -80,11 +82,13 @@ unsigned int PostmanThread(){
 	char perc = '%';
 	char amper = '&';
 
-	//char *tempRec;
-
-	//char *twoMessInOneRec;
-	//bool thereAreAnotherMessage =false;
 	std::string tempString("");
+	std::string temp("");
+	std::map<int, std::pair<HANDLE*, std::string>* > PostmansMap;
+
+	timeval tVal; // For select function
+	tVal.tv_sec = 1;
+	tVal.tv_usec = 0;
 
 	while (true)
 	{
@@ -92,54 +96,52 @@ unsigned int PostmanThread(){
 		if (!Postman_Thread_Exist) { return 0; } // Close Thread
 		LeaveCriticalSection(&G_CS_MES);
 
-		is_recv = false;
-		
-		Sleep(10);
+		fd_set ArrOfSockets;
+		ArrOfSockets.fd_count = 1;
+		ArrOfSockets.fd_array[0] = SaR;
 
-		if (tempString.find(perc) == -1){
-			EnterCriticalSection(&G_CS_MES);
-			recv(SaR, rec, 60, 0);
-			LeaveCriticalSection(&G_CS_MES);
-			tempString.assign(rec);
+		EnterCriticalSection(&G_CS_MES);
+		for (std::vector<std::pair<HANDLE*, std::string> *>::iterator i = BoxOfMessages.begin(); i != BoxOfMessages.end(); ++i){
+			PostmansMap[getUniqId()] = (*i); 
 		}
-		// Проверяем есть ли информация в сообщении
-		if (tempString.find(perc) != -1) {
-			while (true) {
-				if ( tempString.find(amper) != -1) { // Полногстью ссчитали сообщение
-					is_recv = true;
-					break;
-				}
-				else {
-					// ТОгда ссчитываем и прибавляем к строке пока не получим полностью сообщение
-					EnterCriticalSection(&G_CS_MES);
-					recv(SaR, rec, 60, 0);
-					LeaveCriticalSection(&G_CS_MES);
-					tempString.append(rec);
-				}
-			}// EndWhile
+		BoxOfMessages.clear();
+		LeaveCriticalSection(&G_CS_MES);
+
+		// Now we work with own map
+		for (std::map<int, std::pair<HANDLE*, std::string> *>::iterator i = PostmansMap.begin(); i != PostmansMap.end(); ++i){
+			temp = "%%" + std::to_string(i->first) + "+" + i->second->second + "&";  // construct message
+			select(1, NULL, &ArrOfSockets, NULL, &tVal); // To be able to write Corretly
+			send(SaR, temp.c_str(), temp.length(), 0);
+			i->second->second.assign("");
 		}
 
-		if (is_recv){
-			// Теперь делаем подстроку - вырезаем то что у нас было и отправим это в наш обработчик
-			std::string strToProcess = tempString.substr(tempString.find(perc), tempString.find(amper) - tempString.find(perc) + 1);
-			tempString.assign(tempString.substr(tempString.find(amper) + 1));
 
-			// Блок того что мы делаем а именно вырезаем наше сообщение
-			int uniq_id = extractUniq_Id(strToProcess);
-			//
-			EnterCriticalSection(&G_CS_MES);
-			for (std::map<int, std::map<HANDLE*, std::string>>::iterator i = MutualMap.begin(); i != MutualMap.end(); i++){
-				if (i->first == uniq_id){
-					i->second.begin()->second.assign(extractMessage(strToProcess)); // Записываем в map все что между % и &
-					SetEvent( *(i->second.begin()->first) );
-					break;
-				} 
-			} 
-			LeaveCriticalSection(&G_CS_MES);
-		} // End If
+		if (select(1, &ArrOfSockets, NULL, NULL, &tVal)) {
+			// Without testing for errors
+			while (recv(SaR, rec, 60, 0) != -1){
+				tempString.append(rec); // recive until -1 byte
+			}
+
+			// Now we cut string
+			while (tempString != "") {
+				
+				std::string strToProcess = tempString.substr(tempString.find(perc), tempString.find(amper) - tempString.find(perc) + 1);
+				tempString.assign(tempString.substr(tempString.find(amper) + 1));
+				
+				int uniq_id = extractUniq_Id(strToProcess);
+				for (std::map<int, std::pair<HANDLE*, std::string> *>::iterator i = PostmansMap.begin(); i != PostmansMap.end(); ++i){
+					if (uniq_id == i->first){
+						i->second->second.assign(strToProcess);
+						SetEvent(*(i->second->first));
+						PostmansMap.erase(uniq_id);
+						break;
+					}
+				}
+			};
+
+		}
 	}// EndWhile
 };
-
 
 void initConnection(int Port, std::string IP){
 	InitializeCriticalSection(&G_CS_MES);
@@ -189,6 +191,7 @@ void closeSocketConnection(){
 	EnterCriticalSection(&G_CS_MES);
 	Postman_Thread_Exist = false;
 	LeaveCriticalSection(&G_CS_MES);
+	Sleep(20);
 	closesocket(SaR);
 	WSACleanup();
 };
@@ -215,11 +218,6 @@ char* chooseColor(double arg){
 	}
 };
 
-void testSuccess(char *str){
-	if (strstr(str, "fail")) {
-		throw std::exception();
-	}
-};
 void testStringSuccess(std::string str){
 	if (str.find("fail") != std::string::npos) {
 		throw std::exception();
@@ -227,46 +225,18 @@ void testStringSuccess(std::string str){
 };
 
 std::string createMessage(std::string params){
-	EnterCriticalSection(&G_CS_MES); //CRITICAL_SECTION
-	static int UNIQ_ID = 0;
-	UNIQ_ID++;
-	int temp_ID = UNIQ_ID;
-
 	HANDLE WaitRecivedMessage;
 	WaitRecivedMessage = CreateEvent(NULL, true, false, NULL);
 
-	char rec[60];
-	std::string temp = "%%" + std::to_string(UNIQ_ID) + "+" + params + "&";
+	std::pair<HANDLE*, std::string> pairParams(&WaitRecivedMessage, params);
+	EnterCriticalSection(&G_CS_MES); //CRITICAL_SECTION
+	BoxOfMessages.insert(BoxOfMessages.end(), &pairParams); //insert
+	LeaveCriticalSection(&G_CS_MES); 
 
-	send(SaR, temp.c_str(), temp.length(), 0);
+	WaitForSingleObject(WaitRecivedMessage, INFINITE);
 
-	std::map<HANDLE*, std::string> tempMap;
-	tempMap.insert(std::pair<HANDLE*, std::string>(&WaitRecivedMessage, ""));
-	MutualMap.insert(std::pair<int, std::map<HANDLE*, std::string>>(UNIQ_ID, tempMap));
-	tempMap.clear();
-
-	LeaveCriticalSection(&G_CS_MES); // Вышли из критической секции
-
-	printf("SendMessage: %d\n", UNIQ_ID);
-
-	if (params.find("destroy") == -1){
-		WaitForSingleObject(WaitRecivedMessage, INFINITE); // 
-	}
-
-	EnterCriticalSection(&G_CS_MES); // CRITICAL_SECTION
-
-	for (std::map<int, std::map<HANDLE*, std::string>>::iterator i = MutualMap.begin(); i != MutualMap.end(); i++){
-		if (i->first == temp_ID){
-			temp = i->second.begin()->second; // Записываем в map все что между % и &
-			MutualMap.erase(i); // Удаляем чтобы память не забивалась
-			break;
-		} 
-	} 
-
-	LeaveCriticalSection(&G_CS_MES); // Вышли из критической секции
-
-	testStringSuccess(temp);
-	return temp;
+	testStringSuccess(pairParams.second);
+	return pairParams.second;
 };
 
 
