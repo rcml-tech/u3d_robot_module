@@ -19,28 +19,63 @@
 #include "u3d_robot_module.h"
 #include "messages.h"
 
-
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 /////////
 const unsigned int COUNT_u3dRobot_FUNCTIONS = 5;
 const unsigned int COUNT_AXIS = 0;
 
-#define ADD_u3dRobot_FUNCTION(FUNCTION_NAME, COUNT_PARAMS, GIVE_EXCEPTION) \
+#define ADD_SPAWN_FUNCTION(FUNCTION_NAME) \
 u3drobot_functions[function_id] = new FunctionData; \
 u3drobot_functions[function_id]->command_index = function_id + 1; \
-u3drobot_functions[function_id]->count_params = COUNT_PARAMS; \
-u3drobot_functions[function_id]->give_exception = GIVE_EXCEPTION; \
+u3drobot_functions[function_id]->count_params = 6; \
+u3drobot_functions[function_id]->params = new FunctionData::ParamTypes[6]; \
+u3drobot_functions[function_id]->params[0] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->params[1] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->params[2] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->params[3] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->params[4] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->params[5] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->name = FUNCTION_NAME; \
+function_id++;
+//////
+
+#define ADD_MOVE_FUNCTION(FUNCTION_NAME) \
+u3drobot_functions[function_id] = new FunctionData; \
+u3drobot_functions[function_id]->command_index = function_id + 1; \
+u3drobot_functions[function_id]->count_params = 3; \
+u3drobot_functions[function_id]->params = new FunctionData::ParamTypes[3]; \
+u3drobot_functions[function_id]->params[0] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->params[1] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->params[2] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->name = FUNCTION_NAME; \
+function_id++;
+//////
+
+#define ADD_CHANGECOLOR_FUNCTION(FUNCTION_NAME) \
+u3drobot_functions[function_id] = new FunctionData; \
+u3drobot_functions[function_id]->command_index = function_id + 1; \
+u3drobot_functions[function_id]->count_params = 1; \
+u3drobot_functions[function_id]->params = new FunctionData::ParamTypes[1]; \
+u3drobot_functions[function_id]->params[0] = FunctionData::FLOAT; \
+u3drobot_functions[function_id]->name = FUNCTION_NAME; \
+function_id++;
+//////
+
+#define ADD_GET_FUNCTION(FUNCTION_NAME) \
+u3drobot_functions[function_id] = new FunctionData; \
+u3drobot_functions[function_id]->command_index = function_id + 1; \
+u3drobot_functions[function_id]->count_params = 0; \
 u3drobot_functions[function_id]->name = FUNCTION_NAME; \
 function_id++;
 //////
 
 #define DEFINE_ALL_FUNCTIONS \
-ADD_u3dRobot_FUNCTION("spawn", 6, false)\
-ADD_u3dRobot_FUNCTION("move", 3, false)\
-ADD_u3dRobot_FUNCTION("changeColor", 1, false)\
-ADD_u3dRobot_FUNCTION("getX", 0, false)\
-ADD_u3dRobot_FUNCTION("getY", 0, false);
+ADD_SPAWN_FUNCTION("spawn")\
+ADD_MOVE_FUNCTION("move")\
+ADD_CHANGECOLOR_FUNCTION("changeColor")\
+ADD_GET_FUNCTION("getX")\
+ADD_GET_FUNCTION("getY");
 //////
 
 u3dRobotModule::u3dRobotModule() {
@@ -61,7 +96,6 @@ FunctionData** u3dRobotModule::getFunctions(unsigned int *count_functions) {
 	*count_functions = COUNT_u3dRobot_FUNCTIONS;
 	return u3drobot_functions;
 }
-
 
 int u3dRobotModule::init(){
 	InitializeCriticalSection(&VRM_cs);
@@ -149,17 +183,20 @@ void u3dRobotModule::destroy() {
 	delete this;
 };
 
-
 AxisData **u3dRobotModule::getAxis(unsigned int *count_axis){
 	count_axis = COUNT_AXIS;
 	return NULL;
 };
 
-
 void u3dRobot::axisControl(system_value axis_index, variable_value value){
 };
 
-FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_value *args) {
+void *u3dRobotModule::writePC(unsigned int *buffer_length) {
+	*buffer_length = 0;
+	return NULL;
+}
+
+FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) {
 	if ((functionId < 1) || (functionId > COUNT_u3dRobot_FUNCTIONS)) {
 		return NULL;
 	}
@@ -167,17 +204,27 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 	try {
 		switch (functionId) {
 		case 1: {
-			robot_index = createRobot(*args, *(args + 1), *(args + 2), *(args + 3), *(args + 4), *(args + 5));
+			variable_value *input1 = (variable_value *)(*args);
+			variable_value *input2 = (variable_value *)(*(args + 1));
+			variable_value *input3 = (variable_value *)(*(args + 2));
+			variable_value *input4 = (variable_value *)(*(args + 3));
+			variable_value *input5 = (variable_value *)(*(args + 4));
+			variable_value *input6 = (variable_value *)(*(args + 5));
+			robot_index = createRobot(*input1, *input2, *input3, *input4, *input5, *input6);
 			break;
 		}
 		case 2: {
+			variable_value *input1 = (variable_value *)(*args);
+			variable_value *input2 = (variable_value *)(*(args + 1));
+			variable_value *input3 = (variable_value *)(*(args + 2));
 			if (!robot_index){ throw std::exception(); }
-			moveRobot(robot_index, *args, *(args + 1), *(args + 2));
+			moveRobot(robot_index, *input1, *input2, *input3);
 			break;
 		}
 		case 3: {
+			variable_value *input1 = (variable_value *)(*args);
 			if (!robot_index){ throw std::exception(); }
-			colorRobot(robot_index, *args);
+			colorRobot(robot_index, *input1);
 			break;
 		}
 		case 4: {
@@ -197,6 +244,15 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, variable_valu
 		return new FunctionResult(0);
 	};
 };
+
+int u3dRobotModule::startProgram(int uniq_index, void *buffer, unsigned int buffer_length) {
+	return 0;
+}
+
+int u3dRobotModule::endProgram(int uniq_index) {
+	return 0;
+}
+
 
 __declspec(dllexport) RobotModule* getRobotModuleObject() {
 	return new u3dRobotModule();
