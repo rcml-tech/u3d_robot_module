@@ -114,16 +114,20 @@ unsigned int PostmanThread(){
 			send(SaR, temp.c_str(), temp.length(), 0);
 			i->second->second.assign("");
 		}
-
-
+		
 		if (select(1, &ArrOfSockets, NULL, NULL, &tVal)) {
 			// Without testing for errors
-			while (recv(SaR, rec, 60, 0) != -1){
-				tempString.append(rec); // recive until -1 byte
-			}
+			int NumberOfRecivedBytes = 0;
+			do
+			{
+				NumberOfRecivedBytes = recv(SaR, rec, 55, 0);
+				if (NumberOfRecivedBytes == -1) { break; }
+				tempString.append(rec, NumberOfRecivedBytes); // recive until -1 byte
+			} while (NumberOfRecivedBytes !=-1);
 
+			
 			// Now we cut string
-			while (tempString != "") {
+			while (tempString != "" && tempString.find(perc) !=-1) {
 				
 				std::string strToProcess = tempString.substr(tempString.find(perc), tempString.find(amper) - tempString.find(perc) + 1);
 				tempString.assign(tempString.substr(tempString.find(amper) + 1));
@@ -232,8 +236,9 @@ std::string createMessage(std::string params){
 	EnterCriticalSection(&G_CS_MES); //CRITICAL_SECTION
 	BoxOfMessages.insert(BoxOfMessages.end(), &pairParams); //insert
 	LeaveCriticalSection(&G_CS_MES); 
-
-	WaitForSingleObject(WaitRecivedMessage, INFINITE);
+	if (params != "destroy") {
+		WaitForSingleObject(WaitRecivedMessage, INFINITE);
+	}
 	CloseHandle(WaitRecivedMessage);
 
 	testStringSuccess(pairParams.second);

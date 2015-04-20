@@ -19,7 +19,6 @@
 #include "u3d_robot_module.h"
 #include "messages.h"
 
-
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 /////////
