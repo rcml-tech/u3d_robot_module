@@ -13,6 +13,7 @@
 #include <WinSock2.h>
 #include <windows.h>
 #include <process.h>
+#include <time.h>
 #include <map>
 #include <vector>
 #pragma comment(lib, "ws2_32") //link to dll
@@ -21,16 +22,12 @@ SOCKET SaR;
 
 CRITICAL_SECTION G_CS_MES;
 
+HANDLE hPostman;
 bool Postman_Thread_Exist = true; // Global Variable to Colose Postman Thread
 
 std::map<int, std::map<HANDLE*, std::string>>  MutualMap;
 
 std::vector<std::pair<HANDLE*, std::string> *> BoxOfMessages;
-
-int getUniqId(){
-	static int uniq_id = 1;
-	return uniq_id++;
-};
 
 double extractString(std::string str, char first, char second){
 
@@ -90,25 +87,29 @@ unsigned int PostmanThread(){
 	tVal.tv_sec = 1;
 	tVal.tv_usec = 0;
 
+	fd_set ArrOfSockets;
+
+	static int Postmans_UNIQ_ID = 0;
+
 	while (true)
 	{
 		EnterCriticalSection(&G_CS_MES);
 		if (!Postman_Thread_Exist) { return 0; } // Close Thread
 		LeaveCriticalSection(&G_CS_MES);
 
-		fd_set ArrOfSockets;
-		ArrOfSockets.fd_count = 1;
-		ArrOfSockets.fd_array[0] = SaR;
+		FD_ZERO(&ArrOfSockets);
+		FD_SET(SaR,&ArrOfSockets);
 
 		EnterCriticalSection(&G_CS_MES);
 		for (std::vector<std::pair<HANDLE*, std::string> *>::iterator i = BoxOfMessages.begin(); i != BoxOfMessages.end(); ++i){
-			PostmansMap[getUniqId()] = (*i); 
+			Postmans_UNIQ_ID++;
+			PostmansMap[Postmans_UNIQ_ID] = (*i);
 		}
 		BoxOfMessages.clear();
 		LeaveCriticalSection(&G_CS_MES);
 
 		// Now we work with own map
-		for (std::map<int, std::pair<HANDLE*, std::string> *>::iterator i = PostmansMap.begin(); i != PostmansMap.end(); ++i){
+		for (auto i = PostmansMap.begin(); i != PostmansMap.end(); ++i){
 			temp = "%%" + std::to_string(i->first) + "+" + i->second->second + "&";  // construct message
 			select(1, NULL, &ArrOfSockets, NULL, &tVal); // To be able to write Corretly
 			send(SaR, temp.c_str(), temp.length(), 0);
@@ -128,19 +129,16 @@ unsigned int PostmanThread(){
 			
 			// Now we cut string
 			while (tempString != "" && tempString.find(perc) !=-1) {
-				
-				std::string strToProcess = tempString.substr(tempString.find(perc), tempString.find(amper) - tempString.find(perc) + 1);
-				tempString.assign(tempString.substr(tempString.find(amper) + 1));
+				int PosAmper = tempString.find(amper);
+				int PosPerc = tempString.find(perc);
+
+				std::string strToProcess = tempString.substr(PosPerc, PosAmper - PosPerc + 1);
+				tempString.assign(tempString.substr(PosAmper + 1));
 				
 				int uniq_id = extractUniq_Id(strToProcess);
-				for (std::map<int, std::pair<HANDLE*, std::string> *>::iterator i = PostmansMap.begin(); i != PostmansMap.end(); ++i){
-					if (uniq_id == i->first){
-						i->second->second.assign(strToProcess);
-						SetEvent(*(i->second->first));
-						PostmansMap.erase(uniq_id);
-						break;
-					}
-				}
+				PostmansMap[uniq_id]->second = strToProcess;
+				SetEvent( *(PostmansMap[uniq_id]->first));
+				PostmansMap.erase(uniq_id);
 			};
 
 		}
@@ -177,17 +175,14 @@ void initConnection(int Port, std::string IP){
 		printf("ERROR_NONBLOCK: %d", iResult);
 	}
 
-	Sleep(1000);
-
 	if (connect(SaR, (SOCKADDR *)&addr, sizeof(addr)) != 0) {
 		//printf("ERROR can't connect: %d", GetLastError());
 	};
-	Sleep(1000);
 
 	// Start Thread
 	unsigned int unThreadID;
 
-	HANDLE hPostman = (HANDLE)_beginthreadex(NULL, 0, (unsigned(__stdcall *)(void*)) &PostmanThread, NULL, 0, (unsigned *)&unThreadID);
+	hPostman = (HANDLE)_beginthreadex(NULL, 0, (unsigned(__stdcall *)(void*)) &PostmanThread, NULL, 0, (unsigned *)&unThreadID);
 };
 
 // Close Connection
@@ -195,7 +190,7 @@ void closeSocketConnection(){
 	EnterCriticalSection(&G_CS_MES);
 	Postman_Thread_Exist = false;
 	LeaveCriticalSection(&G_CS_MES);
-	Sleep(20);
+	WaitForSingleObject(hPostman, INFINITE);
 	closesocket(SaR);
 	WSACleanup();
 };
@@ -234,7 +229,7 @@ std::string createMessage(std::string params){
 
 	std::pair<HANDLE*, std::string> pairParams(&WaitRecivedMessage, params);
 	EnterCriticalSection(&G_CS_MES); //CRITICAL_SECTION
-	BoxOfMessages.insert(BoxOfMessages.end(), &pairParams); //insert
+	BoxOfMessages.push_back(&pairParams); //push_back
 	LeaveCriticalSection(&G_CS_MES); 
 	if (params != "destroy") {
 		WaitForSingleObject(WaitRecivedMessage, INFINITE);
@@ -244,7 +239,6 @@ std::string createMessage(std::string params){
 	testStringSuccess(pairParams.second);
 	return pairParams.second;
 };
-
 
 // for DELETE
 void deleteRobot(int obj_id){
