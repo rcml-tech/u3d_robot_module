@@ -28,29 +28,34 @@ u3dRobotModule::u3dRobotModule() {
 	u3drobot_functions = new FunctionData*[COUNT_u3dRobot_FUNCTIONS];
 	system_value function_id = 0;
 
-	FunctionData::ParamTypes *spawnParams = new FunctionData::ParamTypes[6];
-	spawnParams[0] = FunctionData::FLOAT;
-	spawnParams[1] = FunctionData::FLOAT;
-	spawnParams[2] = FunctionData::FLOAT;
-	spawnParams[3] = FunctionData::FLOAT;
-	spawnParams[4] = FunctionData::FLOAT;
-	spawnParams[5] = FunctionData::STRING;
+	FunctionData::ParamTypes *Params = new FunctionData::ParamTypes[6];
+	Params[0] = FunctionData::FLOAT;
+	Params[1] = FunctionData::FLOAT;
+	Params[2] = FunctionData::FLOAT;
+	Params[3] = FunctionData::FLOAT;
+	Params[4] = FunctionData::FLOAT;
+	Params[5] = FunctionData::STRING;
 
-	FunctionData::ParamTypes *moveParams = new FunctionData::ParamTypes[3];
-	moveParams[0] = FunctionData::FLOAT;
-	moveParams[1] = FunctionData::FLOAT;
-	moveParams[2] = FunctionData::FLOAT;
-
-	FunctionData::ParamTypes *changeColorParams = new FunctionData::ParamTypes[1];
-	changeColorParams[0] = FunctionData::STRING;
-
-
-	u3drobot_functions[function_id] = new FunctionData(function_id+1, 6, spawnParams, "spawn");
+	u3drobot_functions[function_id] = new FunctionData(function_id+1, 6, Params, "spawn");
 	function_id++;
-	u3drobot_functions[function_id] = new FunctionData(function_id+1, 3, moveParams, "move");
+
+
+	Params = new FunctionData::ParamTypes[3];
+	Params[0] = FunctionData::FLOAT;
+	Params[1] = FunctionData::FLOAT;
+	Params[2] = FunctionData::FLOAT;
+
+	u3drobot_functions[function_id] = new FunctionData(function_id+1, 3, Params, "move");
 	function_id++;
-	u3drobot_functions[function_id] = new FunctionData(function_id+1, 1, changeColorParams, "changeColor");
+
+
+	Params = new FunctionData::ParamTypes[1];
+	Params[0] = FunctionData::STRING;
+
+	u3drobot_functions[function_id] = new FunctionData(function_id+1, 1, Params, "changeColor");
 	function_id++;
+
+
 	u3drobot_functions[function_id] = new FunctionData(function_id+1, 0, NULL, "getX");
 	function_id++;
 	u3drobot_functions[function_id] = new FunctionData(function_id+1, 0, NULL, "getY");
