@@ -8,7 +8,6 @@
 #define _CRT_SECURE_NO_WARNINGS 
 #define _SCL_SECURE_NO_WARNINGS
 
-
 #include <iostream>
 #include <windows.h>
 #include <vector>
@@ -182,23 +181,21 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 			variable_value *input3 = (variable_value *)(*(args + 2));
 			variable_value *input4 = (variable_value *)(*(args + 3));
 			variable_value *input5 = (variable_value *)(*(args + 4));
-			char *tinput6 = (char *)(*(args + 5));
-			std::string input6(tinput6);
+			std::string input6( (const char *)(*(args + 5)) );
 			robot_index = createRobot(*input1, *input2, *input3, *input4, *input5, input6);
 			break;
 		}
 		case 2: {
+			if (!robot_index){ throw std::exception(); }
 			variable_value *input1 = (variable_value *)(*args);
 			variable_value *input2 = (variable_value *)(*(args + 1));
 			variable_value *input3 = (variable_value *)(*(args + 2));
-			if (!robot_index){ throw std::exception(); }
 			moveRobot(robot_index, *input1, *input2, *input3);
 			break;
 		}
 		case 3: {
-			char *tinput1 = (char *)(*(args));
-			std::string input1(tinput1);
 			if (!robot_index){ throw std::exception(); }
+			std::string input1( (const char *)(*(args)) );
 			colorRobot(robot_index, input1);
 			break;
 		}
