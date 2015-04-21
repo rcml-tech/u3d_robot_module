@@ -25,63 +25,28 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 const unsigned int COUNT_u3dRobot_FUNCTIONS = 5;
 const unsigned int COUNT_AXIS = 0;
 
-#define ADD_SPAWN_FUNCTION(FUNCTION_NAME) \
-u3drobot_functions[function_id] = new FunctionData; \
-u3drobot_functions[function_id]->command_index = function_id + 1; \
-u3drobot_functions[function_id]->count_params = 6; \
-u3drobot_functions[function_id]->params = new FunctionData::ParamTypes[6]; \
-u3drobot_functions[function_id]->params[0] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->params[1] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->params[2] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->params[3] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->params[4] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->params[5] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->name = FUNCTION_NAME; \
-function_id++;
-//////
-
-#define ADD_MOVE_FUNCTION(FUNCTION_NAME) \
-u3drobot_functions[function_id] = new FunctionData; \
-u3drobot_functions[function_id]->command_index = function_id + 1; \
-u3drobot_functions[function_id]->count_params = 3; \
-u3drobot_functions[function_id]->params = new FunctionData::ParamTypes[3]; \
-u3drobot_functions[function_id]->params[0] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->params[1] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->params[2] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->name = FUNCTION_NAME; \
-function_id++;
-//////
-
-#define ADD_CHANGECOLOR_FUNCTION(FUNCTION_NAME) \
-u3drobot_functions[function_id] = new FunctionData; \
-u3drobot_functions[function_id]->command_index = function_id + 1; \
-u3drobot_functions[function_id]->count_params = 1; \
-u3drobot_functions[function_id]->params = new FunctionData::ParamTypes[1]; \
-u3drobot_functions[function_id]->params[0] = FunctionData::FLOAT; \
-u3drobot_functions[function_id]->name = FUNCTION_NAME; \
-function_id++;
-//////
-
-#define ADD_GET_FUNCTION(FUNCTION_NAME) \
-u3drobot_functions[function_id] = new FunctionData; \
-u3drobot_functions[function_id]->command_index = function_id + 1; \
-u3drobot_functions[function_id]->count_params = 0; \
-u3drobot_functions[function_id]->name = FUNCTION_NAME; \
-function_id++;
-//////
-
-#define DEFINE_ALL_FUNCTIONS \
-ADD_SPAWN_FUNCTION("spawn")\
-ADD_MOVE_FUNCTION("move")\
-ADD_CHANGECOLOR_FUNCTION("changeColor")\
-ADD_GET_FUNCTION("getX")\
-ADD_GET_FUNCTION("getY");
-//////
-
 u3dRobotModule::u3dRobotModule() {
 	u3drobot_functions = new FunctionData*[COUNT_u3dRobot_FUNCTIONS];
 	system_value function_id = 0;
-	DEFINE_ALL_FUNCTIONS
+
+	FunctionData::ParamTypes *SpawnParams = new FunctionData::ParamTypes[6];
+	SpawnParams[0] = FunctionData::FLOAT;
+	SpawnParams[1] = FunctionData::FLOAT;
+	SpawnParams[2] = FunctionData::FLOAT;
+	SpawnParams[3] = FunctionData::FLOAT;
+	SpawnParams[4] = FunctionData::FLOAT;
+	SpawnParams[5] = FunctionData::FLOAT;
+
+	function_id++;
+	u3drobot_functions[function_id] = new FunctionData(function_id, 6, SpawnParams, "spawn");
+	function_id++;
+	u3drobot_functions[function_id] = new FunctionData(function_id, 3, SpawnParams, "move");
+	function_id++;
+	u3drobot_functions[function_id] = new FunctionData(function_id, 1, SpawnParams, "changeColor");
+	function_id++;
+	u3drobot_functions[function_id] = new FunctionData(function_id, 0, NULL, "getX");
+	function_id++;
+	u3drobot_functions[function_id] = new FunctionData(function_id, 0, NULL, "getY");
 };
 
 void u3dRobotModule::prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p) {
