@@ -29,24 +29,32 @@ u3dRobotModule::u3dRobotModule() {
 	u3drobot_functions = new FunctionData*[COUNT_u3dRobot_FUNCTIONS];
 	system_value function_id = 0;
 
-	FunctionData::ParamTypes *SpawnParams = new FunctionData::ParamTypes[6];
-	SpawnParams[0] = FunctionData::FLOAT;
-	SpawnParams[1] = FunctionData::FLOAT;
-	SpawnParams[2] = FunctionData::FLOAT;
-	SpawnParams[3] = FunctionData::FLOAT;
-	SpawnParams[4] = FunctionData::FLOAT;
-	SpawnParams[5] = FunctionData::FLOAT;
+	FunctionData::ParamTypes *spawnParams = new FunctionData::ParamTypes[6];
+	spawnParams[0] = FunctionData::FLOAT;
+	spawnParams[1] = FunctionData::FLOAT;
+	spawnParams[2] = FunctionData::FLOAT;
+	spawnParams[3] = FunctionData::FLOAT;
+	spawnParams[4] = FunctionData::FLOAT;
+	spawnParams[5] = FunctionData::STRING;
 
+	FunctionData::ParamTypes *moveParams = new FunctionData::ParamTypes[3];
+	moveParams[0] = FunctionData::FLOAT;
+	moveParams[1] = FunctionData::FLOAT;
+	moveParams[2] = FunctionData::FLOAT;
+
+	FunctionData::ParamTypes *changeColorParams = new FunctionData::ParamTypes[1];
+	changeColorParams[0] = FunctionData::STRING;
+
+
+	u3drobot_functions[function_id] = new FunctionData(function_id+1, 6, spawnParams, "spawn");
 	function_id++;
-	u3drobot_functions[function_id] = new FunctionData(function_id, 6, SpawnParams, "spawn");
+	u3drobot_functions[function_id] = new FunctionData(function_id+1, 3, moveParams, "move");
 	function_id++;
-	u3drobot_functions[function_id] = new FunctionData(function_id, 3, SpawnParams, "move");
+	u3drobot_functions[function_id] = new FunctionData(function_id+1, 1, changeColorParams, "changeColor");
 	function_id++;
-	u3drobot_functions[function_id] = new FunctionData(function_id, 1, SpawnParams, "changeColor");
+	u3drobot_functions[function_id] = new FunctionData(function_id+1, 0, NULL, "getX");
 	function_id++;
-	u3drobot_functions[function_id] = new FunctionData(function_id, 0, NULL, "getX");
-	function_id++;
-	u3drobot_functions[function_id] = new FunctionData(function_id, 0, NULL, "getY");
+	u3drobot_functions[function_id] = new FunctionData(function_id+1, 0, NULL, "getY");
 };
 
 void u3dRobotModule::prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p) {
@@ -174,8 +182,9 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 			variable_value *input3 = (variable_value *)(*(args + 2));
 			variable_value *input4 = (variable_value *)(*(args + 3));
 			variable_value *input5 = (variable_value *)(*(args + 4));
-			variable_value *input6 = (variable_value *)(*(args + 5));
-			robot_index = createRobot(*input1, *input2, *input3, *input4, *input5, *input6);
+			char *tinput6 = (char *)(*(args + 5));
+			std::string input6(tinput6);
+			robot_index = createRobot(*input1, *input2, *input3, *input4, *input5, input6);
 			break;
 		}
 		case 2: {
@@ -187,9 +196,10 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 			break;
 		}
 		case 3: {
-			variable_value *input1 = (variable_value *)(*args);
+			char *tinput1 = (char *)(*(args));
+			std::string input1(tinput1);
 			if (!robot_index){ throw std::exception(); }
-			colorRobot(robot_index, *input1);
+			colorRobot(robot_index, input1);
 			break;
 		}
 		case 4: {

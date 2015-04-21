@@ -59,8 +59,8 @@ std::string extractMessage(std::string str){
 	char first = '+';
 	char second = '&';
 
-	int beg = 0;
-	int end = 0;
+	unsigned int beg = 0;
+	unsigned int end = 0;
 
 	beg = str.find(first)+1;
 	end = str.find(second)+1; // чтобы сохранить амперсанд и не надо было снова функции переписывать
@@ -83,19 +83,19 @@ unsigned int PostmanThread(){
 	std::string temp("");
 	std::map<int, std::pair<HANDLE*, std::string>* > PostmansMap;
 
-	timeval tVal; // For select function
-	tVal.tv_sec = 1;
-	tVal.tv_usec = 0;
-
 	fd_set ArrOfSockets;
 
-	static int Postmans_UNIQ_ID = 0;
+	unsigned int Postmans_UNIQ_ID = 0;
 
 	while (true)
 	{
 		EnterCriticalSection(&G_CS_MES);
 		if (!Postman_Thread_Exist) { return 0; } // Close Thread
 		LeaveCriticalSection(&G_CS_MES);
+
+		timeval tVal; // For select function
+		tVal.tv_sec = 1;
+		tVal.tv_usec = 0;
 
 		FD_ZERO(&ArrOfSockets);
 		FD_SET(SaR,&ArrOfSockets);
@@ -111,12 +111,11 @@ unsigned int PostmanThread(){
 		// Now we work with own map
 		for (auto i = PostmansMap.begin(); i != PostmansMap.end(); ++i){
 			temp = "%%" + std::to_string(i->first) + "+" + i->second->second + "&";  // construct message
-			select(1, NULL, &ArrOfSockets, NULL, &tVal); // To be able to write Corretly
 			send(SaR, temp.c_str(), temp.length(), 0);
 			i->second->second.assign("");
 		}
 		
-		if (select(1, &ArrOfSockets, NULL, NULL, &tVal)) {
+		if (select(SaR + 1, &ArrOfSockets, NULL, NULL, &tVal)) {
 			// Without testing for errors
 			int NumberOfRecivedBytes = 0;
 			do
@@ -126,11 +125,11 @@ unsigned int PostmanThread(){
 				tempString.append(rec, NumberOfRecivedBytes); // recive until -1 byte
 			} while (NumberOfRecivedBytes !=-1);
 
-			
+
 			// Now we cut string
-			while (tempString != "" && tempString.find(perc) !=-1) {
-				int PosAmper = tempString.find(amper);
-				int PosPerc = tempString.find(perc);
+			while (tempString.find(amper) != std::string::npos) {
+				unsigned int PosAmper = tempString.find(amper);
+				unsigned int PosPerc = tempString.find(perc);
 
 				std::string strToProcess = tempString.substr(PosPerc, PosAmper - PosPerc + 1);
 				tempString.assign(tempString.substr(PosAmper + 1));
@@ -140,7 +139,6 @@ unsigned int PostmanThread(){
 				SetEvent( *(PostmansMap[uniq_id]->first));
 				PostmansMap.erase(uniq_id);
 			};
-
 		}
 	}// EndWhile
 };
@@ -195,28 +193,6 @@ void closeSocketConnection(){
 	WSACleanup();
 };
 
-char* chooseColor(double arg){
-	switch ((int)arg){
-	case 1:  {return "00FF00"; }
-	case 2:  {return "FFFF00"; }
-	case 3:  {return "00FFFF"; }
-	case 4:  {return "FF00FF"; }
-	case 5:  {return "000000"; }
-	case 6:  {return "0000FF"; }
-	case 7:  {return "FFFFFF"; }
-	case 8:  {return "008080"; }
-	case 9:  {return "808000"; }
-	case 10:  {return "000080"; }
-	case 11:  {return "808080"; }
-	case 12:  {return "800000"; }
-	case 13:  {return "FF0000"; }
-	case 14:  {return "C0C0C0"; }
-	case 15:  {return "800080"; }
-	case 16:  {return "008000"; }
-	default: {return "4682B4"; }
-	}
-};
-
 void testStringSuccess(std::string str){
 	if (str.find("fail") != std::string::npos) {
 		throw std::exception();
@@ -267,7 +243,7 @@ void initWorld(int x, int y, int z){
 	createMessage(params);
 };
 // for CREATE
-double createRobot(int x, int y, int d_x, int d_y, int d_z, int color){
+double createRobot(int x, int y, int d_x, int d_y, int d_z, std::string color){
 	std::string params("robot");
 
 	params.append(":");
@@ -283,7 +259,7 @@ double createRobot(int x, int y, int d_x, int d_y, int d_z, int color){
 	params.append(",");
 	params.append(std::to_string(d_z));
 	params.append(",");
-	params.append(chooseColor(color));
+	params.append(color);
 
 	std::string temp;
 	temp = createMessage(params);
@@ -292,7 +268,7 @@ double createRobot(int x, int y, int d_x, int d_y, int d_z, int color){
 	return d;
 };
 // for COLOR
-void colorRobot(int obj_id, int color){
+void colorRobot(int obj_id, std::string color){
 	std::string params("robot");
 
 	params.append(":");
@@ -300,7 +276,7 @@ void colorRobot(int obj_id, int color){
 	params.append(",");
 	params.append(std::to_string(obj_id));
 	params.append(",");
-	params.append(chooseColor(color));
+	params.append(color);
 
 	createMessage(params);
 };
