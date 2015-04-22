@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{63D3DD00-39A2-4BB5-821B-0A47BF9EDF28}</ProjectGuid>
+    <ProjectGuid>{8325934D-024E-40ED-B897-FE6182486671}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>u3d_robot_module</RootNamespace>
   </PropertyGroup>
@@ -41,7 +41,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\..\..\Soft_new\robot_modules\u3d_robot</OutDir>
+    <OutDir>..\..\bin\robot_modules\u3d</OutDir>
+    <TargetName>u3d_module</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -54,6 +55,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;U3D_ROBOT_MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\simpleini;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -84,9 +86,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="messages.h" />
-    <ClInclude Include="module.h" />
-    <ClInclude Include="robot_module.h" />
-    <ClInclude Include="SimpleIni.h" />
     <ClInclude Include="u3d_robot_module.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

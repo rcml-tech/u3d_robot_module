@@ -44,7 +44,7 @@ double extractString(std::string str, char first, char second){
 
 	return std::stod(temp);
 };
-double extractObj_id(std::string str){
+int extractObj_id(std::string str){
 	return extractString(str, ':', '&');
 };
 double extractX(std::string str){
@@ -243,7 +243,7 @@ void initWorld(int x, int y, int z){
 	createMessage(params);
 };
 // for CREATE
-double createRobot(int x, int y, int d_x, int d_y, int d_z, std::string color){
+int createRobot(int x, int y, int d_x, int d_y, int d_z, std::string color){
 	std::string params("robot");
 
 	params.append(":");

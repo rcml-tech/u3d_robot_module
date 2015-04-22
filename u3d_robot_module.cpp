@@ -13,8 +13,8 @@
 #include <vector>
 
 #include "SimpleIni.h"
-#include "module.h"
-#include "robot_module.h"
+#include "../module_headers/module.h"
+#include "../module_headers/robot_module.h"
 #include "u3d_robot_module.h"
 #include "messages.h"
 
@@ -181,26 +181,27 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 	try {
 		switch (functionId) {
 		case 1: {
-			variable_value *input1 = (variable_value *)(*args);
-			variable_value *input2 = (variable_value *)(*(args + 1));
-			variable_value *input3 = (variable_value *)(*(args + 2));
-			variable_value *input4 = (variable_value *)(*(args + 3));
-			variable_value *input5 = (variable_value *)(*(args + 4));
-			std::string input6( (const char *)(*(args + 5)) );
-			robot_index = createRobot(*input1, *input2, *input3, *input4, *input5, input6);
+			variable_value *input1 = (variable_value *) args[0];
+			variable_value *input2 = (variable_value *) args[1];
+			variable_value *input3 = (variable_value *) args[2];
+			variable_value *input4 = (variable_value *) args[3];
+			variable_value *input5 = (variable_value *) args[4];
+			std::string input6( (const char *) args[5]);
+
+			robot_index = createRobot((int) *input1, (int) *input2, (int) *input3, (int) *input4, (int) *input5, input6);
 			break;
 		}
 		case 2: {
 			if (!robot_index){ throw std::exception(); }
-			variable_value *input1 = (variable_value *)(*args);
-			variable_value *input2 = (variable_value *)(*(args + 1));
-			variable_value *input3 = (variable_value *)(*(args + 2));
-			moveRobot(robot_index, *input1, *input2, *input3);
+			variable_value *input1 = (variable_value *) args[0];
+			variable_value *input2 = (variable_value *) args[1];
+			variable_value *input3 = (variable_value *) args[2];
+			moveRobot(robot_index, (int)*input1, (int)*input2, (int)*input3);
 			break;
 		}
 		case 3: {
 			if (!robot_index){ throw std::exception(); }
-			std::string input1( (const char *)(*(args)) );
+			std::string input1( (const char *) args[0] );
 			colorRobot(robot_index, input1);
 			break;
 		}

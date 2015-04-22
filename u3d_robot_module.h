@@ -7,7 +7,7 @@
 #define	VIRTUAL_ROBOT_MODULE_H
 class u3dRobot : public Robot {
 public:
-	variable_value robot_index;
+	int robot_index;
 	
 	std::vector<variable_value> axis_state;
 	u3dRobot(int robot_index) : robot_index(0){};
@@ -19,35 +19,36 @@ public:
 typedef std::vector<u3dRobot*> m_connections;
 
 class u3dRobotModule : public RobotModule{
-public:
 	CRITICAL_SECTION VRM_cs;
 	m_connections aviable_connections;
 	FunctionData **u3drobot_functions;
 	AxisData **robot_axis;
 	colorPrintf_t *colorPrintf;
-	u3dRobotModule();
 
-	//init
-	const char *getUID();
-	void prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p);
+	public:
+		u3dRobotModule();
 
-	//compiler only
-	FunctionData** getFunctions(unsigned int *count_functions);
-	AxisData** getAxis(unsigned int *count_axis);
-	void *writePC(unsigned int *buffer_length);
+		//init
+		const char *getUID();
+		void prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p);
 
-	//intepreter - devices
-	int init();
-	Robot* robotRequire();
-	void robotFree(Robot *robot);
-	void final();
+		//compiler only
+		FunctionData** getFunctions(unsigned int *count_functions);
+		AxisData** getAxis(unsigned int *count_axis);
+		void *writePC(unsigned int *buffer_length);
 
-	//intepreter - program
-	int startProgram(int uniq_index, void *buffer, unsigned int buffer_length);
-	int endProgram(int uniq_index);
+		//intepreter - devices
+		int init();
+		Robot* robotRequire();
+		void robotFree(Robot *robot);
+		void final();
 
-	//destructor
-	void destroy();
-	~u3dRobotModule(){};
+		//intepreter - program
+		int startProgram(int uniq_index, void *buffer, unsigned int buffer_length);
+		int endProgram(int uniq_index);
+
+		//destructor
+		void destroy();
+		~u3dRobotModule(){};
 };
 #endif	/* VIRTUAL_ROBOT_MODULE_H */
