@@ -45,7 +45,7 @@ double extractString(std::string str, char first, char second){
 	return std::stod(temp);
 };
 int extractObj_id(std::string str){
-	return extractString(str, ':', '&');
+	return (int) extractString(str, ':', '&');
 };
 double extractX(std::string str){
 	return extractString(str, ':', ',');
@@ -70,7 +70,7 @@ std::string extractMessage(std::string str){
 };
 
 int extractUniq_Id(std::string str){
-	return extractString(str,'%','+');
+	return (int) extractString(str,'%','+');
 };
 
 unsigned int PostmanThread(){
@@ -264,7 +264,7 @@ int createRobot(int x, int y, int d_x, int d_y, int d_z, std::string color){
 	std::string temp;
 	temp = createMessage(params);
 
-	double d = extractObj_id(temp);
+	int d = extractObj_id(temp);
 	return d;
 };
 // for COLOR
