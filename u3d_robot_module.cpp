@@ -97,8 +97,8 @@ int u3dRobotModule::init(){
 	CSimpleIniA::TNamesDepend values;
 	CSimpleIniA::TNamesDepend IP;
 	CSimpleIniA::TNamesDepend x, y, z;
-	ini.GetAllValues("ports", "port", values);
-	ini.GetAllValues("ips", "ip", IP);
+	ini.GetAllValues("connection", "port", values);
+	ini.GetAllValues("connection", "ip", IP);
 	ini.GetAllValues("world", "x", x);
 	ini.GetAllValues("world", "y", y);
 	ini.GetAllValues("world", "z", z);
