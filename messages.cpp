@@ -23,7 +23,6 @@
 SOCKET SaR;
 
 CRITICAL_SECTION G_CS_MES;
-LPVOID pTempBuf; // ѕроверим просто с указателем
 HANDLE hSharedPostmansMemory = NULL;
 
 HANDLE hPostman;
@@ -192,13 +191,11 @@ void initConnection(int Port, std::string IP){
 	shm_obj.truncate(sizeof(VectorAndCS*));
 	boost::interprocess::mapped_region region(shm_obj, boost::interprocess::read_write);
 
-	// —оздадим пару из указател€ на наш вектор и указател€ на критическую секцию
-
 	DataForSharedMemory.Vector = &BoxOfMessages;
 	DataForSharedMemory.CS = &G_CS_MES;
 
-	VectorAndCS *ptrDataForSharedMemory = &DataForSharedMemory; // ƒелаем указатель на структуру чтобы его адрес кинуть в memcpy
-	std::memcpy(region.get_address(), &ptrDataForSharedMemory, region.get_size()); // записали данные  в нашу расшаренную область пам€ти
+	VectorAndCS *ptrDataForSharedMemory = &DataForSharedMemory; 
+	std::memcpy(region.get_address(), &ptrDataForSharedMemory, region.get_size()); 
 	
 	// Start Thread
 	unsigned int unThreadID;
