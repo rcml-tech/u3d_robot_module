@@ -23,10 +23,9 @@
 SOCKET SaR;
 
 CRITICAL_SECTION G_CS_MES;
-HANDLE hSharedPostmansMemory = NULL;
 
 HANDLE hPostman;
-bool Postman_Thread_Exist = true; // Global Variable to Colose Postman Thread
+bool Postman_Thread_Exist = true;
 
 std::vector<std::pair<HANDLE*, std::string> *> BoxOfMessages;
 
@@ -82,7 +81,8 @@ int extractUniq_Id(std::string str){
 };
 
 unsigned int PostmanThread(){
-	char rec[60] = {0};
+	const int buffer_length = 1024;
+	char rec[buffer_length] = { 0 };
 	bool is_recv = false;
 	char perc = '%';
 	char amper = '&';
@@ -128,9 +128,9 @@ unsigned int PostmanThread(){
 			int NumberOfRecivedBytes = 0;
 			do
 			{
-				NumberOfRecivedBytes = recv(SaR, rec, 55, 0);
+				NumberOfRecivedBytes = recv(SaR, rec, buffer_length, 0);
 				if (NumberOfRecivedBytes == -1) { break; }
-				tempString.append(rec, NumberOfRecivedBytes); // recive until -1 byte
+				tempString.append(rec, NumberOfRecivedBytes);
 			} while (NumberOfRecivedBytes !=-1);
 
 
@@ -225,8 +225,8 @@ std::string createMessage(std::string params){
 	WaitRecivedMessage = CreateEvent(NULL, true, false, NULL);
 
 	std::pair<HANDLE*, std::string> pairParams(&WaitRecivedMessage, params);
-	EnterCriticalSection(&G_CS_MES); //CRITICAL_SECTION
-	BoxOfMessages.push_back(&pairParams); //push_back
+	EnterCriticalSection(&G_CS_MES);
+	BoxOfMessages.push_back(&pairParams);
 	LeaveCriticalSection(&G_CS_MES); 
 	if (params != "destroy") {
 		WaitForSingleObject(WaitRecivedMessage, INFINITE);
@@ -237,7 +237,6 @@ std::string createMessage(std::string params){
 	return pairParams.second;
 };
 
-// for DELETE
 void deleteRobot(int obj_id){
 	std::string params("delete");
 
@@ -246,11 +245,11 @@ void deleteRobot(int obj_id){
 
 	createMessage(params);
 };
-// for DESTROY
+
 void destroyWorld(){
 	createMessage("destroy");
 };
-// for INIT
+
 void initWorld(int x, int y, int z){
 	std::string params("init");
 
@@ -263,7 +262,7 @@ void initWorld(int x, int y, int z){
 
 	createMessage(params);
 };
-// for CREATE
+
 int createRobot(int x, int y, int d_x, int d_y, int d_z, std::string color){
 	std::string params("robot");
 
@@ -288,7 +287,7 @@ int createRobot(int x, int y, int d_x, int d_y, int d_z, std::string color){
 	int d = extractObj_id(temp);
 	return d;
 };
-// for COLOR
+
 void colorRobot(int obj_id, std::string color){
 	std::string params("robot");
 
@@ -301,7 +300,7 @@ void colorRobot(int obj_id, std::string color){
 
 	createMessage(params);
 };
-// for MOVE
+
 void moveRobot(int obj_id, int x, int y, int speed){
 	std::string params("robot");
 
@@ -318,7 +317,7 @@ void moveRobot(int obj_id, int x, int y, int speed){
 
 	createMessage(params);
 };
-// for COORDS
+
 double coordsRobotX(int obj_id){
 	std::string params("robot");
 
@@ -333,7 +332,7 @@ double coordsRobotX(int obj_id){
 	double d = extractObj_id(temp);
 	return d;
 };
-// for COORDS
+
 double coordsRobotY(int obj_id){
 	std::string params("robot");
 

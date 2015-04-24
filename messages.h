@@ -7,20 +7,6 @@
 void initConnection(int Port, std::string IP);
 void closeSocketConnection();
 
-double extractString(std::string str, char first, char second);
-
-unsigned int PostmanThread(); //Thread
-
-int extractObj_id(std::string str);
-double extractX(std::string str);
-double extractY(std::string str);
-
-std::string extractMessage(std::string str);
-int extractUniq_Id(std::string str);
-
-void testStringSuccess(std::string str);
-std::string createMessage(std::string params);
-
 void initWorld(int x, int y, int z);
 void destroyWorld();
 
