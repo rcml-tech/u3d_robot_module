@@ -12,22 +12,30 @@
 #include "messages.h"
 #include <WinSock2.h>
 #include <windows.h>
-#include <process.h>
 #include <time.h>
 #include <map>
 #include <vector>
 #pragma comment(lib, "ws2_32") //link to dll
 
+#include <boost\interprocess\shared_memory_object.hpp>
+#include <boost\interprocess\managed_shared_memory.hpp>
+
 SOCKET SaR;
 
 CRITICAL_SECTION G_CS_MES;
+HANDLE hSharedPostmansMemory = NULL;
 
 HANDLE hPostman;
 bool Postman_Thread_Exist = true; // Global Variable to Colose Postman Thread
 
-std::map<int, std::map<HANDLE*, std::string>>  MutualMap;
-
 std::vector<std::pair<HANDLE*, std::string> *> BoxOfMessages;
+
+struct VectorAndCS{
+	std::vector<std::pair<HANDLE*, std::string> *>* Vector;
+	CRITICAL_SECTION *CS;
+};
+
+VectorAndCS DataForSharedMemory;
 
 double extractString(std::string str, char first, char second){
 
@@ -176,7 +184,19 @@ void initConnection(int Port, std::string IP){
 	if (connect(SaR, (SOCKADDR *)&addr, sizeof(addr)) != 0) {
 		//printf("ERROR can't connect: %d", GetLastError());
 	};
+	
+	// Create File Mapping
+	boost::interprocess::shared_memory_object shm_obj(boost::interprocess::open_or_create, "PostmansSharedMemory", boost::interprocess::read_write);
 
+	shm_obj.truncate(sizeof(VectorAndCS*));
+	boost::interprocess::mapped_region region(shm_obj, boost::interprocess::read_write);
+
+	DataForSharedMemory.Vector = &BoxOfMessages;
+	DataForSharedMemory.CS = &G_CS_MES;
+
+	VectorAndCS *ptrDataForSharedMemory = &DataForSharedMemory; 
+	std::memcpy(region.get_address(), &ptrDataForSharedMemory, region.get_size()); 
+	
 	// Start Thread
 	unsigned int unThreadID;
 
@@ -189,6 +209,7 @@ void closeSocketConnection(){
 	Postman_Thread_Exist = false;
 	LeaveCriticalSection(&G_CS_MES);
 	WaitForSingleObject(hPostman, INFINITE);
+	boost::interprocess::shared_memory_object::remove("PostmansSharedMemory");
 	closesocket(SaR);
 	WSACleanup();
 };
