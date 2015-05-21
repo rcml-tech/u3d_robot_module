@@ -154,6 +154,9 @@ void u3dRobotModule::final(){
 
 void u3dRobotModule::destroy() {
 	for (unsigned int j = 0; j < COUNT_u3dRobot_FUNCTIONS; ++j) {
+		if (u3drobot_functions[j]->count_params) {
+			delete[] u3drobot_functions[j]->params;
+		}
 		delete u3drobot_functions[j];
 	}
 	delete[] u3drobot_functions;
