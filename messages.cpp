@@ -18,13 +18,13 @@
 	#include <arpa/inet.h>
 	#include <fcntl.h>
 	#include <stdarg.h>
-	#include <errno.h>
 	#include <dlfcn.h>
 	#include <sys/types.h>
 	#include <sys/time.h>
 	#include <sys/socket.h>
 	#include <unistd.h>
 	#include <stdio.h>
+	#include <errno.h>
 #endif
 
 #include <string>
@@ -40,19 +40,13 @@
 
 #ifdef _WIN32
 	//Typedefs section
-	typedef HINSTANCE PLUGIN_HANDLE;
 	typedef unsigned int THREAD_HANDLE;
 	typedef HANDLE* PTR_EVENT_HANDLE;
-
-	//Service section
-	#define snprintf _snprintf
-	#define sleep(X) Sleep(X*1000)
 
 	//Threads and Atoms section
 	#define DEFINE_ATOM(ATOM_NAME) CRITICAL_SECTION ATOM_NAME;
 	#define PTR_DEFINE_ATOM(ATOM_NAME) CRITICAL_SECTION* ATOM_NAME;
 	#define DEFINE_EVENT(EVENT_NAME) HANDLE EVENT_NAME = CreateEvent(NULL, true, false, NULL);
-	//#define CREATE_EVENT(EVENT_NAME) EVENT_NAME = CreateEvent(NULL, true, false, NULL);
 	#define DESTROY_EVENT(EVENT_NAME) CloseHandle(EVENT_NAME);
 	#define DEFINE_THREAD_PROCEDURE(PROC_NAME) unsigned int WINAPI PROC_NAME( void* arg )
 	#define ATOM_LOCK(ATOM_NAME) EnterCriticalSection( &ATOM_NAME );
@@ -63,24 +57,18 @@
 			addLog("beda\n"); \
 		}
 	#define EVENT_SEND(EVENT_NAME) SetEvent(EVENT_NAME)
-	#define START_THREAD(PROC_NAME,PARAM,THREAD_ID,INDEX) \
-		threadsHandles[INDEX] = (HANDLE) _beginthreadex(NULL,0,PROC_NAME,PARAM,0,&THREAD_ID)
 	#define START_THREAD_DEMON(PROC_NAME,PARAM,THREAD_ID) \
 		(HANDLE) _beginthreadex(NULL,0,PROC_NAME,PARAM,0,&THREAD_ID)
 
 	//Sockets section
-	#define SOCKET_ERROR_PROCESS(ERROR_DESCRIPTION) \
-		{ \
-			addLog(ERROR_DESCRIPTION,WSAGetLastError()); \
-			WSACleanup(); \
-			exit(1); \
-		}
 	#define SOCKET_CLOSE(SOCKET_NAME,ERROR_DESCRIPTION) \
 		if (closesocket(SOCKET_NAME) == SOCKET_ERROR) \
 		{ \
 			addLog(ERROR_DESCRIPTION,WSAGetLastError()); \
 		}
 	#define SOCKET_NON_BLOCK(SOCKET_NAME,ERROR_DESCRIPTION) \
+		u_long iMode = 1;\
+		int iResult;\
 		iResult = ioctlsocket(SOCKET_NAME,FIONBIO,&iMode); \
 		if (iResult != NO_ERROR) \
 		{ \
@@ -88,7 +76,6 @@
 		}
 #else
 	//Typedefs section
-	typedef void * PLUGIN_HANDLE;
 	typedef pthread_t THREAD_HANDLE;
 	typedef int SOCKET;
 	typedef sockaddr SOCKADDR;
@@ -98,32 +85,27 @@
 	#define DEFINE_ATOM(ATOM_NAME)   pthread_mutex_t ATOM_NAME = PTHREAD_MUTEX_INITIALIZER;
 	#define PTR_DEFINE_ATOM(ATOM_NAME) pthread_mutex_t* ATOM_NAME; 
 	#define DEFINE_EVENT(EVENT_NAME) pthread_cond_t  EVENT_NAME = PTHREAD_COND_INITIALIZER;
-	//#define CREATE_EVENT(EVENT_NAME) EVENT_NAME = PTHREAD_COND_INITIALIZER;
 	#define DESTROY_EVENT(EVENT_NAME) pthread_cond_destroy(&EVENT_NAME);
 	#define DEFINE_THREAD_PROCEDURE(PROC_NAME) void * PROC_NAME(void *arg)
 	#define ATOM_LOCK(ATOM_NAME) pthread_mutex_lock( &ATOM_NAME )
 	#define ATOM_UNLOCK(ATOM_NAME) pthread_mutex_unlock( &ATOM_NAME )
-	#define EVENT_WAIT(EVENT_NAME,ATOM_NAME) pthread_cond_wait(&EVENT_NAME,&ATOM_NAME);
+	#define EVENT_WAIT(EVENT_NAME,ATOM_NAME) { \
+			pthread_mutex_lock(&ATOM_NAME);\
+			pthread_cond_wait(&EVENT_NAME,&ATOM_NAME);\
+			pthread_mutex_unlock(&ATOM_NAME);\
+		}
 	#define EVENT_SEND(EVENT_NAME) pthread_cond_signal(&EVENT_NAME);
-	#define START_THREAD(PROC_NAME,PARAM,THREAD_ID,INDEX) \
-		pthread_create(&THREAD_ID,NULL,&PROC_NAME,PARAM);
 	#define START_THREAD_DEMON(PROC_NAME,PARAM,THREAD_ID) \
 		pthread_create(&THREAD_ID,NULL,&PROC_NAME,PARAM);
 	
 	//Sockets section
 	#define SOCKET_ERROR -1
-	#define INVALID_SOCKET -1
-	#define SOCKET_ERROR_PROCESS(ERROR_DESCRIPTION) \
-		{ \
-			addLog(ERROR_DESCRIPTION,errno); \
-			exit(1); \
-		}
 	#define SOCKET_CLOSE(SOCKET_NAME,ERROR_DESCRIPTION) \
 		close(SOCKET_NAME);
 	#define SOCKET_NON_BLOCK(SOCKET_NAME,ERROR_DESCRIPTION) \
 		if (fcntl(SOCKET_NAME, F_SETFL, O_NONBLOCK) == SOCKET_ERROR) \
 		{ \
-			printf("%d", iResult); \
+			printf("%d", errno); \
 		}
 #endif
 
@@ -191,7 +173,6 @@ int extractUniq_Id(std::string str){
 DEFINE_THREAD_PROCEDURE(PostmanThread){
 	const int buffer_length = 1024;
 	char rec[buffer_length] = { 0 };
-	bool is_recv = false;
 	char perc = '%';
 	char amper = '&';
 
@@ -205,15 +186,11 @@ DEFINE_THREAD_PROCEDURE(PostmanThread){
 
 	while (true)
 	{
-		std::cout << "Thread_works !!!!!!!!!!!!!!!" << std::endl;
 		ATOM_LOCK(G_CS_MES);
-		std::cout << "ATOM_LOCK Thread_1 "<< &G_CS_MES << std::endl;
 		if (!Postman_Thread_Exist) { 
-			std::cout << "Terminated " << std::endl;
 			return 0; 
 		} // Close Thread
 		ATOM_UNLOCK(G_CS_MES);
-		std::cout << "ATOM_LOCK Thread_1 Outside" << std::endl;
 		timeval tVal; // For select function
 		tVal.tv_sec = 1;
 		tVal.tv_usec = 0;
@@ -222,14 +199,12 @@ DEFINE_THREAD_PROCEDURE(PostmanThread){
 		FD_SET(SaR,&ArrOfSockets);
 
 		ATOM_LOCK(G_CS_MES);
-		std::cout << "ATOM_LOCK Thread_2 "<< &G_CS_MES << std::endl;
 		for (std::vector<std::pair<PTR_EVENT_HANDLE, std::string> *>::iterator i = BoxOfMessages.begin(); i != BoxOfMessages.end(); ++i){
 			Postmans_UNIQ_ID++;
 			PostmansMap[Postmans_UNIQ_ID] = (*i);
 		}
 		BoxOfMessages.clear();
 		ATOM_UNLOCK(G_CS_MES);
-		std::cout << "ATOM_LOCK Thread_2 Outside" << std::endl;
 
 		// Now we work with own map
 		for (auto i = PostmansMap.begin(); i != PostmansMap.end(); ++i){
@@ -259,11 +234,7 @@ DEFINE_THREAD_PROCEDURE(PostmanThread){
 				
 				int uniq_id = extractUniq_Id(strToProcess);
 				PostmansMap[uniq_id]->second = strToProcess;
-				std::cout << "Postman sends EVENT!" << std::endl;
 				EVENT_SEND(*(PostmansMap[uniq_id]->first))
-				std::cout << "EVENT Sended" << std::endl;
-				//SetEvent( *(PostmansMap[uniq_id]->first));
-
 				PostmansMap.erase(uniq_id);
 			};
 		}
@@ -289,31 +260,17 @@ void initConnection(int Port, std::string IP){
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(Port);
 	addr.sin_addr.S_un.S_addr = inet_addr(IP.c_str());
-
 #else
-
 	sockaddr_in addr;
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(Port);
 	addr.sin_addr.s_addr = inet_addr(IP.c_str());
-
 #endif
 	
-	std::cout << "init_starts" << std::endl;
-
 	SaR = socket(PF_INET, SOCK_STREAM, 0);
 
-	u_long iMode = 1;
-	int iResult;
-
 	SOCKET_NON_BLOCK(SaR,"Try to make socket nonblocking: ");
-/*
-	iResult = ioctlsocket(SaR, FIONBIO, &iMode);
-	if (iResult != NO_ERROR) {
-		printf("ERROR_NONBLOCK: %d", iResult);
-	}
-*/
 
 	if (connect(SaR, (SOCKADDR *)&addr, sizeof(addr)) != 0) {
 		//printf("ERROR can't connect: %d", GetLastError());
@@ -337,19 +294,12 @@ void initConnection(int Port, std::string IP){
 #else
 	pthread_t unThreadID;
 #endif	
-	std::cout << "Thread_starts" << std::endl;
 	hPostman = START_THREAD_DEMON(PostmanThread,NULL,unThreadID);
-	std::cout << "init_ends" << std::endl;
-
-	//#define START_THREAD_DEMON(&PostmanThread,NULL,&unThreadID)
-	//	(HANDLE) _beginthreadex(NULL,0,PROC_NAME,PARAM,0,&THREAD_ID)
-	//hPostman = (HANDLE)_beginthreadex(NULL, 0, (unsigned(__stdcall *)(void*)) &PostmanThread, NULL, 0, (unsigned *)&unThreadID);
 };
 
 // Close Connection
 void closeSocketConnection(){
 	ATOM_LOCK(G_CS_MES);
-	std::cout << "ATOM_LOCK closeSocketConnection" << std::endl;
 	Postman_Thread_Exist = false;
 	ATOM_UNLOCK(G_CS_MES);
 #ifdef _WIN32
@@ -357,10 +307,8 @@ void closeSocketConnection(){
 #else
 	pthread_join(hPostman,NULL);
 #endif
-	//WaitForSingleObject(hPostman, INFINITE);
 	boost::interprocess::shared_memory_object::remove("PostmansSharedMemory");
 	SOCKET_CLOSE(SaR,"Can't close socket: ");
-	//closesocket(SaR);
 	
 #ifdef _WIN32
 	WSACleanup();
@@ -374,32 +322,20 @@ void testStringSuccess(std::string str){
 };
 
 std::string createMessage(std::string params){
-	//HANDLE WaitRecivedMessage;
 	DEFINE_EVENT(WaitRecivedMessage);
-	//WaitRecivedMessage = CreateEvent(NULL, true, false, NULL);
-	std::cout << "createMessage_starts:  "<< params.c_str() << std::endl;
-
+#ifndef _WIN32
+	pthread_mutex_t WaitMessageMutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 	std::pair<PTR_EVENT_HANDLE, std::string> pairParams(&WaitRecivedMessage, params);
-	std::cout << "Outside_ATOM_LOCK " << &G_CS_MES << std::endl;
 	ATOM_LOCK(G_CS_MES);
-	std::cout << "Inside_ATOM_LOCK" << std::endl;
 	BoxOfMessages.push_back(&pairParams);
-	std::cout << "Push_message_in_BoxOfMessages" << std::endl;
 	ATOM_UNLOCK(G_CS_MES); 
 	if (params != "destroy") {
-		std::cout << "Wait_Postman" << std::endl;
-		EVENT_WAIT(WaitRecivedMessage,G_CS_MES);
-		std::cout << "Wait_Postman_success" << std::endl;
-		//WaitForSingleObject(WaitRecivedMessage, INFINITE);
+		EVENT_WAIT(WaitRecivedMessage,WaitMessageMutex);
 	}
-
-	//CloseHandle(WaitRecivedMessage);
 	DESTROY_EVENT(WaitRecivedMessage);
-
 	testStringSuccess(pairParams.second);
 
-
-	std::cout << "createMessage_ends" << std::endl;
 	return pairParams.second;
 };
 

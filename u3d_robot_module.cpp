@@ -49,28 +49,28 @@ u3dRobotModule::u3dRobotModule() {
 	system_value function_id = 0;
 
 	FunctionData::ParamTypes *Params = new FunctionData::ParamTypes[6];
-	Params[0] = FunctionData::FLOAT;
-	Params[1] = FunctionData::FLOAT;
-	Params[2] = FunctionData::FLOAT;
-	Params[3] = FunctionData::FLOAT;
-	Params[4] = FunctionData::FLOAT;
-	Params[5] = FunctionData::STRING;
+	Params[0] = FunctionData::ParamTypes::FLOAT;
+	Params[1] = FunctionData::ParamTypes::FLOAT;
+	Params[2] = FunctionData::ParamTypes::FLOAT;
+	Params[3] = FunctionData::ParamTypes::FLOAT;
+	Params[4] = FunctionData::ParamTypes::FLOAT;
+	Params[5] = FunctionData::ParamTypes::STRING;
 
 	u3drobot_functions[function_id] = new FunctionData(function_id+1, 6, Params, "spawn");
 	function_id++;
 
 
 	Params = new FunctionData::ParamTypes[3];
-	Params[0] = FunctionData::FLOAT;
-	Params[1] = FunctionData::FLOAT;
-	Params[2] = FunctionData::FLOAT;
+	Params[0] = FunctionData::ParamTypes::FLOAT;
+	Params[1] = FunctionData::ParamTypes::FLOAT;
+	Params[2] = FunctionData::ParamTypes::FLOAT;
 
 	u3drobot_functions[function_id] = new FunctionData(function_id+1, 3, Params, "move");
 	function_id++;
 
 
 	Params = new FunctionData::ParamTypes[1];
-	Params[0] = FunctionData::STRING;
+	Params[0] = FunctionData::ParamTypes::STRING;
 
 	u3drobot_functions[function_id] = new FunctionData(function_id+1, 1, Params, "changeColor");
 	function_id++;
@@ -96,8 +96,6 @@ FunctionData** u3dRobotModule::getFunctions(unsigned int *count_functions) {
 
 int u3dRobotModule::init(){
 	CSimpleIniA ini;
-	//std::cout << "Init_starts" << std::endl;
-	//DEFINE_ATOM(VRM_cs);
 #ifdef _WIN32
 	InitializeCriticalSection(&VRM_cs);
 	ini.SetMultiKey(true);
@@ -126,7 +124,6 @@ int u3dRobotModule::init(){
 
 	const char* ConfigPath = dltemp.c_str();
 #endif
-	std::cout << ConfigPath << std::endl;
 	if (ini.LoadFile(ConfigPath) < 0) {
 		colorPrintf(this, ConsoleColor(ConsoleColor::red), "Can't load '%s' file!\n", ConfigPath);
 		return 1;
@@ -141,9 +138,6 @@ int u3dRobotModule::init(){
 	ini.GetAllValues("world", "y", y);
 	ini.GetAllValues("world", "z", z);
 
-	std::cout << values.begin()->pItem << std::endl;
-	std::cout << IP.begin()->pItem << std::endl;
-
 	CSimpleIniA::TNamesDepend::const_iterator ini_value;
 
 	for (ini_value = values.begin(); ini_value != values.end(); ++ini_value) {
@@ -151,26 +145,20 @@ int u3dRobotModule::init(){
 		int port = std::stoi(ini_value->pItem);
 
 		std::string temp(IP.begin()->pItem);
-		std::cout << "InitConnection_starts" << std::endl;
 		initConnection(port, temp);
-		//Sleep(20);
-		std::cout << "InitConnection_ends" << std::endl;
 		initWorld(std::stoi(x.begin()->pItem), std::stoi(y.begin()->pItem), std::stoi(z.begin()->pItem));
 	}
-	//std::cout << "Init_ends" << std::endl;
 	return 0;
 };
 
 
 Robot* u3dRobotModule::robotRequire(){
-	//std::cout << "robotRequire_starts" << std::endl;
 	ATOM_LOCK(VRM_cs);
 	u3dRobot *u3d_robot = new u3dRobot(0);
 	aviable_connections.push_back(u3d_robot);
 
 	Robot *robot = u3d_robot;
 	ATOM_UNLOCK(VRM_cs);
-	//std::cout << "robotRequire_ends" << std::endl;
 	return robot;
 };
 
@@ -236,9 +224,7 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 			variable_value *input4 = (variable_value *) args[3];
 			variable_value *input5 = (variable_value *) args[4];
 			std::string input6( (const char *) args[5]);
-			std::cout << "spawn_function_starts" << std::endl;
 			robot_index = createRobot((int) *input1, (int) *input2, (int) *input3, (int) *input4, (int) *input5, input6);
-			std::cout << "spawn_function_ends" << std::endl;
 			break;
 		}
 		case 2: { // 
