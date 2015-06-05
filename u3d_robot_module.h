@@ -19,7 +19,11 @@ public:
 typedef std::vector<u3dRobot*> m_connections;
 
 class u3dRobotModule : public RobotModule{
+#ifdef _WIN32
 	CRITICAL_SECTION VRM_cs;
+#else
+	pthread_mutex_t VRM_cs;
+#endif
 	m_connections aviable_connections;
 	FunctionData **u3drobot_functions;
 	AxisData **robot_axis;
