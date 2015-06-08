@@ -15,7 +15,6 @@
 #ifdef _WIN32
 	#include <windows.h>
 #else
-	#include <cstdarg>
 	#include <fcntl.h>
 	#include <dlfcn.h>
 	#include <pthread.h>
@@ -227,7 +226,7 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 			robot_index = createRobot((int) *input1, (int) *input2, (int) *input3, (int) *input4, (int) *input5, input6);
 			break;
 		}
-		case 2: { // 
+		case 2: { // move 
 			if (!robot_index){ throw std::exception(); }
 			variable_value *input1 = (variable_value *) args[0];
 			variable_value *input2 = (variable_value *) args[1];
@@ -235,18 +234,18 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 			moveRobot(robot_index, (int)*input1, (int)*input2, (int)*input3);
 			break;
 		}
-		case 3: { //
+		case 3: { // change Color
 			if (!robot_index){ throw std::exception(); }
 			std::string input1( (const char *) args[0] );
 			colorRobot(robot_index, input1);
 			break;
 		}
-		case 4: {
+		case 4: { // getX
 			if (!robot_index){ throw std::exception(); }
 			rez = coordsRobotX(robot_index);
 			break;
 		}
-		case 5: {
+		case 5: { // getY
 			if (!robot_index){ throw std::exception(); }
 			rez = coordsRobotY(robot_index);
 			break;
