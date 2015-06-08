@@ -4,34 +4,31 @@
 *
 */
 
-#define _WINSOCK_DEPRECATED_NO_WARNINGS 
-#define _CRT_SECURE_NO_WARNINGS 
-#define _SCL_SECURE_NO_WARNINGS
-
 #include <string>
-#include "messages.h"
-#include <WinSock2.h>
-#include <windows.h>
 #include <time.h>
 #include <map>
 #include <vector>
-#pragma comment(lib, "ws2_32") //link to dll
 
-#include <boost\interprocess\shared_memory_object.hpp>
-#include <boost\interprocess\managed_shared_memory.hpp>
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/managed_shared_memory.hpp>
+
+#include "messages.h"
+
+#include "define_section.h"
+
 
 SOCKET SaR;
 
-CRITICAL_SECTION G_CS_MES;
+DEFINE_ATOM(G_CS_MES);
 
-HANDLE hPostman;
+THREAD_HANDLE hPostman;
 bool Postman_Thread_Exist = true;
 
-std::vector<std::pair<HANDLE*, std::string> *> BoxOfMessages;
+std::vector<std::pair<PTR_EVENT_HANDLE, std::string> *> BoxOfMessages;
 
 struct VectorAndCS{
-	std::vector<std::pair<HANDLE*, std::string> *>* Vector;
-	CRITICAL_SECTION *CS;
+	std::vector<std::pair<PTR_EVENT_HANDLE, std::string> *>* Vector;
+	PTR_DEFINE_ATOM(CS);
 };
 
 VectorAndCS DataForSharedMemory;
@@ -70,7 +67,7 @@ std::string extractMessage(std::string str){
 	unsigned int end = 0;
 
 	beg = str.find(first)+1;
-	end = str.find(second)+1; // чтобы сохранить амперсанд и не надо было снова функции переписывать
+	end = str.find(second)+1;
 
 	temp.assign(str, beg, end - beg);
 	return temp;
@@ -80,16 +77,16 @@ int extractUniq_Id(std::string str){
 	return (int) extractString(str,'%','+');
 };
 
-unsigned int PostmanThread(){
+// Thread Function
+DEFINE_THREAD_PROCEDURE(PostmanThread){
 	const int buffer_length = 1024;
 	char rec[buffer_length] = { 0 };
-	bool is_recv = false;
 	char perc = '%';
 	char amper = '&';
 
 	std::string tempString("");
 	std::string temp("");
-	std::map<int, std::pair<HANDLE*, std::string>* > PostmansMap;
+	std::map<int, std::pair<PTR_EVENT_HANDLE, std::string>* > PostmansMap;
 
 	fd_set ArrOfSockets;
 
@@ -97,10 +94,11 @@ unsigned int PostmanThread(){
 
 	while (true)
 	{
-		EnterCriticalSection(&G_CS_MES);
-		if (!Postman_Thread_Exist) { return 0; } // Close Thread
-		LeaveCriticalSection(&G_CS_MES);
-
+		ATOM_LOCK(G_CS_MES);
+		if (!Postman_Thread_Exist) { 
+			return 0; 
+		} // Close Thread
+		ATOM_UNLOCK(G_CS_MES);
 		timeval tVal; // For select function
 		tVal.tv_sec = 1;
 		tVal.tv_usec = 0;
@@ -108,13 +106,13 @@ unsigned int PostmanThread(){
 		FD_ZERO(&ArrOfSockets);
 		FD_SET(SaR,&ArrOfSockets);
 
-		EnterCriticalSection(&G_CS_MES);
-		for (std::vector<std::pair<HANDLE*, std::string> *>::iterator i = BoxOfMessages.begin(); i != BoxOfMessages.end(); ++i){
+		ATOM_LOCK(G_CS_MES);
+		for (std::vector<std::pair<PTR_EVENT_HANDLE, std::string> *>::iterator i = BoxOfMessages.begin(); i != BoxOfMessages.end(); ++i){
 			Postmans_UNIQ_ID++;
 			PostmansMap[Postmans_UNIQ_ID] = (*i);
 		}
 		BoxOfMessages.clear();
-		LeaveCriticalSection(&G_CS_MES);
+		ATOM_UNLOCK(G_CS_MES);
 
 		// Now we work with own map
 		for (auto i = PostmansMap.begin(); i != PostmansMap.end(); ++i){
@@ -144,7 +142,7 @@ unsigned int PostmanThread(){
 				
 				int uniq_id = extractUniq_Id(strToProcess);
 				PostmansMap[uniq_id]->second = strToProcess;
-				SetEvent( *(PostmansMap[uniq_id]->first));
+				EVENT_SEND(*(PostmansMap[uniq_id]->first))
 				PostmansMap.erase(uniq_id);
 			};
 		}
@@ -152,8 +150,8 @@ unsigned int PostmanThread(){
 };
 
 void initConnection(int Port, std::string IP){
+#ifdef _WIN32
 	InitializeCriticalSection(&G_CS_MES);
-
 	WSADATA w;
 	int error = WSAStartup(0x0202, &w);
 
@@ -170,16 +168,17 @@ void initConnection(int Port, std::string IP){
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(Port);
 	addr.sin_addr.S_un.S_addr = inet_addr(IP.c_str());
+#else
+	sockaddr_in addr;
 
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(Port);
+	addr.sin_addr.s_addr = inet_addr(IP.c_str());
+#endif
+	
 	SaR = socket(PF_INET, SOCK_STREAM, 0);
 
-	u_long iMode = 1;
-	int iResult;
-
-	iResult = ioctlsocket(SaR, FIONBIO, &iMode);
-	if (iResult != NO_ERROR) {
-		printf("ERROR_NONBLOCK: %d", iResult);
-	}
+	SOCKET_NON_BLOCK(SaR,"Try to make socket nonblocking: ");
 
 	if (connect(SaR, (SOCKADDR *)&addr, sizeof(addr)) != 0) {
 		//printf("ERROR can't connect: %d", GetLastError());
@@ -198,20 +197,30 @@ void initConnection(int Port, std::string IP){
 	std::memcpy(region.get_address(), &ptrDataForSharedMemory, region.get_size()); 
 	
 	// Start Thread
+#ifdef _WIN32
 	unsigned int unThreadID;
-
-	hPostman = (HANDLE)_beginthreadex(NULL, 0, (unsigned(__stdcall *)(void*)) &PostmanThread, NULL, 0, (unsigned *)&unThreadID);
+#else
+	pthread_t unThreadID;
+#endif	
+	hPostman = START_THREAD_DEMON(PostmanThread,NULL,unThreadID);
 };
 
 // Close Connection
 void closeSocketConnection(){
-	EnterCriticalSection(&G_CS_MES);
+	ATOM_LOCK(G_CS_MES);
 	Postman_Thread_Exist = false;
-	LeaveCriticalSection(&G_CS_MES);
-	WaitForSingleObject(hPostman, INFINITE);
+	ATOM_UNLOCK(G_CS_MES);
+#ifdef _WIN32
+	EVENT_WAIT(hPostman,G_CS_MES);
+#else
+	pthread_join(hPostman,NULL);
+#endif
 	boost::interprocess::shared_memory_object::remove("PostmansSharedMemory");
-	closesocket(SaR);
+	SOCKET_CLOSE(SaR,"Can't close socket: ");
+	
+#ifdef _WIN32
 	WSACleanup();
+#endif
 };
 
 void testStringSuccess(std::string str){
@@ -221,19 +230,18 @@ void testStringSuccess(std::string str){
 };
 
 std::string createMessage(std::string params){
-	HANDLE WaitRecivedMessage;
-	WaitRecivedMessage = CreateEvent(NULL, true, false, NULL);
-
-	std::pair<HANDLE*, std::string> pairParams(&WaitRecivedMessage, params);
-	EnterCriticalSection(&G_CS_MES);
+	DEFINE_EVENT(WaitRecivedMessage);
+	DEFINE_ATOM(WaitMessageMutex);
+	std::pair<PTR_EVENT_HANDLE, std::string> pairParams(&WaitRecivedMessage, params);
+	ATOM_LOCK(G_CS_MES);
 	BoxOfMessages.push_back(&pairParams);
-	LeaveCriticalSection(&G_CS_MES); 
+	ATOM_UNLOCK(G_CS_MES); 
 	if (params != "destroy") {
-		WaitForSingleObject(WaitRecivedMessage, INFINITE);
+		EVENT_WAIT(WaitRecivedMessage,WaitMessageMutex);
 	}
-	CloseHandle(WaitRecivedMessage);
-
+	DESTROY_EVENT(WaitRecivedMessage);
 	testStringSuccess(pairParams.second);
+
 	return pairParams.second;
 };
 
