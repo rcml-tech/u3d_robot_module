@@ -4,6 +4,7 @@
 *
 */
 
+#include <stdlib.h>
 #include <string>
 #include <time.h>
 #include <map>
@@ -13,9 +14,8 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 
 #include "messages.h"
-
 #include "define_section.h"
-
+#include "stringC11.h"
 
 SOCKET SaR;
 
@@ -46,7 +46,7 @@ double extractString(std::string str, char first, char second){
 
 	temp.assign(str, beg, end - beg);
 
-	return std::stod(temp);
+	return strtod(temp.c_str(), NULL);
 };
 int extractObj_id(std::string str){
 	return (int) extractString(str, ':', '&');
@@ -142,7 +142,7 @@ DEFINE_THREAD_PROCEDURE(PostmanThread){
 				
 				int uniq_id = extractUniq_Id(strToProcess);
 				PostmansMap[uniq_id]->second = strToProcess;
-				EVENT_SEND(*(PostmansMap[uniq_id]->first))
+				EVENT_SEND(*(PostmansMap[uniq_id]->first));
 				PostmansMap.erase(uniq_id);
 			};
 		}
@@ -155,12 +155,12 @@ void initConnection(int Port, std::string IP){
 	WSADATA w;
 	int error = WSAStartup(0x0202, &w);
 
-	if (error) { printf("ERROR WSAStartup: %d", GetLastError()); };
+	if (error) { printf("ERROR WSAStartup: %lu", GetLastError()); };
 
 	if (w.wVersion != 0x0202)
 	{
 		WSACleanup();
-		printf("ERROR Wrong Version of WSADATA: %d", GetLastError());
+		printf("ERROR Wrong Version of WSADATA: %lu", GetLastError());
 	}
 
 	sockaddr_in addr;
@@ -178,7 +178,7 @@ void initConnection(int Port, std::string IP){
 	
 	SaR = socket(PF_INET, SOCK_STREAM, 0);
 
-	SOCKET_NON_BLOCK(SaR,"Try to make socket nonblocking: ");
+	SOCKET_NON_BLOCK(SaR,"Try to make socket nonblocking: %d");
 
 	if (connect(SaR, (SOCKADDR *)&addr, sizeof(addr)) != 0) {
 		//printf("ERROR can't connect: %d", GetLastError());
@@ -216,7 +216,7 @@ void closeSocketConnection(){
 	pthread_join(hPostman,NULL);
 #endif
 	boost::interprocess::shared_memory_object::remove("PostmansSharedMemory");
-	SOCKET_CLOSE(SaR,"Can't close socket: ");
+	SOCKET_CLOSE(SaR,"Can't close socket: %d");
 	
 #ifdef _WIN32
 	WSACleanup();
