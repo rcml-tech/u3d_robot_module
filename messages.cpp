@@ -217,6 +217,7 @@ void closeSocketConnection(){
 #endif
 	boost::interprocess::shared_memory_object::remove("PostmansSharedMemory");
 	SOCKET_CLOSE(SaR,"Can't close socket: %d");
+	DESTROY_ATOM(G_CS_MES);
 	
 #ifdef _WIN32
 	WSACleanup();
@@ -240,6 +241,7 @@ std::string createMessage(std::string params){
 		EVENT_WAIT(WaitRecivedMessage,WaitMessageMutex);
 	}
 	DESTROY_EVENT(WaitRecivedMessage);
+	DESTROY_ATOM(WaitMessageMutex);
 	testStringSuccess(pairParams.second);
 
 	return pairParams.second;

@@ -35,6 +35,7 @@
 	#define DEFINE_THREAD_PROCEDURE(PROC_NAME) unsigned int WINAPI PROC_NAME( void* arg )
 	#define ATOM_LOCK(ATOM_NAME) EnterCriticalSection( &ATOM_NAME );
 	#define ATOM_UNLOCK(ATOM_NAME) LeaveCriticalSection( &ATOM_NAME );
+	#define DESTROY_ATOM(ATOM_NAME) DeleteCriticalSection(&ATOM_NAME);
 	#define EVENT_WAIT(EVENT_NAME,ATOM_NAME) \
 		if (WaitForSingleObject(EVENT_NAME, INFINITE) == WAIT_FAILED) \
 		{ \
@@ -73,6 +74,7 @@
 	#define DEFINE_THREAD_PROCEDURE(PROC_NAME) void * PROC_NAME(void *arg)
 	#define ATOM_LOCK(ATOM_NAME) pthread_mutex_lock( &ATOM_NAME )
 	#define ATOM_UNLOCK(ATOM_NAME) pthread_mutex_unlock( &ATOM_NAME )
+	#define DESTROY_ATOM(ATOM_NAME) pthread_mutex_destroy(&ATOM_NAME);
 	#define EVENT_WAIT(EVENT_NAME,ATOM_NAME) { \
 			pthread_mutex_lock(&ATOM_NAME);\
 			pthread_cond_wait(&EVENT_NAME,&ATOM_NAME);\
