@@ -20,7 +20,7 @@ debug: FILENAME_FIX = debug
 debug: clean module
 
 release: OBJECTDIR = build/Release
-release: FLAGS = -O3 -D__NO_INLINE__ ${FLAGS_MUTUAL}
+release: FLAGS = -O3 ${FLAGS_MUTUAL}
 release: FILENAME_FIX = release
 release: clean module
 
