@@ -154,7 +154,7 @@ int u3dRobotModule::init(){
 
 Robot* u3dRobotModule::robotRequire(){
 	ATOM_LOCK(VRM_cs);
-	u3dRobot *u3d_robot = new u3dRobot(0);
+	u3dRobot *u3d_robot = new u3dRobot();
 	aviable_connections.push_back(u3d_robot);
 
 	Robot *robot = u3d_robot;
