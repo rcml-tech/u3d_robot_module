@@ -41,8 +41,10 @@
 #include "messages.h"
 #include "define_section.h"
 
-#ifndef _MSC_VER
-	#include "stringC11.h"
+#ifdef _WIN32
+	#ifndef _MSC_VER
+		#include "stringC11.h"
+	#endif
 #endif
 
 SOCKET SaR;
