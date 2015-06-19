@@ -3,17 +3,20 @@
 * Author: m79lol, iskinmike
 *
 */
+
 #ifdef _WIN32
+	#define _WINSOCK_DEPRECATED_NO_WARNINGS
 	#define _CRT_SECURE_NO_WARNINGS 
 	#define _SCL_SECURE_NO_WARNINGS
 #endif
 
+#include <stdlib.h> 
 #include <string>
 #include <vector>
 
 #ifdef _WIN32
 	#include <windows.h>
-	#include <stdlib.h> 
+	
 #else
 	#include <fcntl.h>
 	#include <dlfcn.h>
@@ -21,22 +24,17 @@
 #endif
 
 #include "SimpleIni.h"
+
+#include "define_section.h"
+
 #include "module.h"
 #include "robot_module.h"
 #include "u3d_robot_module.h"
+
 #include "messages.h"
 
 #ifdef _WIN32
 	EXTERN_C IMAGE_DOS_HEADER __ImageBase;
-	// Critical Atom_section
-	#define DEFINE_ATOM(ATOM_NAME) CRITICAL_SECTION ATOM_NAME;
-	#define ATOM_LOCK(ATOM_NAME) EnterCriticalSection( &ATOM_NAME );
-	#define ATOM_UNLOCK(ATOM_NAME) LeaveCriticalSection( &ATOM_NAME );
-#else
-	// Critical Atom_section
-	#define DEFINE_ATOM(ATOM_NAME) pthread_mutex_t ATOM_NAME = PTHREAD_MUTEX_INITIALIZER;
-	#define ATOM_LOCK(ATOM_NAME) pthread_mutex_lock( &ATOM_NAME );
-	#define ATOM_UNLOCK(ATOM_NAME) pthread_mutex_unlock( &ATOM_NAME );
 #endif
 
 /////////
@@ -95,9 +93,10 @@ FunctionData** u3dRobotModule::getFunctions(unsigned int *count_functions) {
 
 int u3dRobotModule::init(){
 	CSimpleIniA ini;
+	ini.SetMultiKey(true);
+
 #ifdef _WIN32
 	InitializeCriticalSection(&VRM_cs);
-	ini.SetMultiKey(true);
 
 	WCHAR DllPath[MAX_PATH] = { 0 };
 
@@ -112,19 +111,17 @@ int u3dRobotModule::init(){
 	char ConfigPath[MAX_PATH] = {0};
 	wcstombs(ConfigPath,wConfigPath,sizeof(ConfigPath));
 #else
-	pthread_mutex_init(&VRM_cs, NULL);
-
 	Dl_info PathToSharedObject;
-	void * pointer = reinterpret_cast<void*> (getRobotModuleObject) ;
-	dladdr(pointer,&PathToSharedObject);
+	void *pointer = reinterpret_cast<void*>(getRobotModuleObject);
+	dladdr(pointer, &PathToSharedObject);
 	std::string dltemp(PathToSharedObject.dli_fname);
 
 	int dlfound = dltemp.find_last_of("/");
 
-	dltemp = dltemp.substr(0,dlfound);
+	dltemp = dltemp.substr(0, dlfound);
 	dltemp += "/config.ini";
 
-	const char* ConfigPath = dltemp.c_str();
+	const char *ConfigPath = dltemp.c_str();
 #endif
 	if (ini.LoadFile(ConfigPath) < 0) {
 		colorPrintf(this, ConsoleColor(ConsoleColor::red), "Can't load '%s' file!\n", ConfigPath);

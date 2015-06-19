@@ -1,28 +1,4 @@
 #ifdef _WIN32
-	#define _WINSOCK_DEPRECATED_NO_WARNINGS
-	#define _CRT_SECURE_NO_WARNINGS 
-	#define _SCL_SECURE_NO_WARNINGS
-	
-	#include <stdio.h>
-	#include <stdlib.h>
-	#include <WinSock2.h>
-	#include <process.h>
-
-	#ifdef _MSC_VER
-		#pragma comment(lib, "Ws2_32.lib") //link to dll
-	#endif
-#else
-	#include <pthread.h>
-	#include <arpa/inet.h>
-	#include <sys/types.h>
-	#include <sys/time.h>
-	#include <sys/socket.h>
-	#include <unistd.h>
-	#include <stdio.h>
-	#include <errno.h>
-#endif
-
-#ifdef _WIN32
 	//Typedefs section
 	typedef HANDLE THREAD_HANDLE;
 	typedef HANDLE* PTR_EVENT_HANDLE;
@@ -36,7 +12,7 @@
 	#define ATOM_LOCK(ATOM_NAME) EnterCriticalSection( &ATOM_NAME );
 	#define ATOM_UNLOCK(ATOM_NAME) LeaveCriticalSection( &ATOM_NAME );
 	#define DESTROY_ATOM(ATOM_NAME) DeleteCriticalSection(&ATOM_NAME);
-	#define EVENT_WAIT(EVENT_NAME,ATOM_NAME) \
+	#define EVENT_WAIT(EVENT_NAME, ATOM_NAME) \
 		if (WaitForSingleObject(EVENT_NAME, INFINITE) == WAIT_FAILED) \
 		{ \
 			printf("beda\n"); \
@@ -68,10 +44,10 @@
 
 	//Threads and Atoms section
 	#define DEFINE_ATOM(ATOM_NAME)   pthread_mutex_t ATOM_NAME = PTHREAD_MUTEX_INITIALIZER;
-	#define PTR_DEFINE_ATOM(ATOM_NAME) pthread_mutex_t* ATOM_NAME; 
+	#define PTR_DEFINE_ATOM(ATOM_NAME) pthread_mutex_t *ATOM_NAME; 
 	#define DEFINE_EVENT(EVENT_NAME) pthread_cond_t  EVENT_NAME = PTHREAD_COND_INITIALIZER;
 	#define DESTROY_EVENT(EVENT_NAME) pthread_cond_destroy(&EVENT_NAME);
-	#define DEFINE_THREAD_PROCEDURE(PROC_NAME) void * PROC_NAME(void *arg)
+	#define DEFINE_THREAD_PROCEDURE(PROC_NAME) void *PROC_NAME(void *arg)
 	#define ATOM_LOCK(ATOM_NAME) pthread_mutex_lock( &ATOM_NAME )
 	#define ATOM_UNLOCK(ATOM_NAME) pthread_mutex_unlock( &ATOM_NAME )
 	#define DESTROY_ATOM(ATOM_NAME) pthread_mutex_destroy(&ATOM_NAME);

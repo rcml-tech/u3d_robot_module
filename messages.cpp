@@ -4,17 +4,43 @@
 *
 */
 
+#ifdef _WIN32
+	#define _WINSOCK_DEPRECATED_NO_WARNINGS
+	#define _CRT_SECURE_NO_WARNINGS 
+	#define _SCL_SECURE_NO_WARNINGS
+#endif
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <time.h>
 #include <map>
 #include <vector>
 
+#ifdef _WIN32
+	#include <WinSock2.h>
+	#include <process.h>
+
+	#ifdef _MSC_VER
+		#pragma comment(lib, "Ws2_32.lib") //link to dll
+	#endif
+#else
+	#include <pthread.h>
+	#include <arpa/inet.h>
+	#include <sys/types.h>
+	#include <sys/time.h>
+	#include <sys/socket.h>
+	#include <unistd.h>
+	#include <errno.h>
+#endif
+
+
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 
 #include "messages.h"
 #include "define_section.h"
+
 #ifndef _MSC_VER
 	#include "stringC11.h"
 #endif
@@ -164,17 +190,15 @@ void initConnection(int Port, std::string IP){
 		WSACleanup();
 		printf("ERROR Wrong Version of WSADATA: %lu", GetLastError());
 	}
+#endif
 
 	sockaddr_in addr;
-
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(Port);
+
+#ifdef _WIN32
 	addr.sin_addr.S_un.S_addr = inet_addr(IP.c_str());
 #else
-	sockaddr_in addr;
-
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(Port);
 	addr.sin_addr.s_addr = inet_addr(IP.c_str());
 #endif
 	
@@ -213,7 +237,7 @@ void closeSocketConnection(){
 	Postman_Thread_Exist = false;
 	ATOM_UNLOCK(G_CS_MES);
 #ifdef _WIN32
-	EVENT_WAIT(hPostman,G_CS_MES);
+	EVENT_WAIT(hPostman, G_CS_MES);
 #else
 	pthread_join(hPostman,NULL);
 #endif
@@ -235,17 +259,20 @@ void testStringSuccess(std::string str){
 std::string createMessage(std::string params){
 	DEFINE_EVENT(WaitRecivedMessage);
 	DEFINE_ATOM(WaitMessageMutex);
+
 	std::pair<PTR_EVENT_HANDLE, std::string> pairParams(&WaitRecivedMessage, params);
+
 	ATOM_LOCK(G_CS_MES);
 	BoxOfMessages.push_back(&pairParams);
 	ATOM_UNLOCK(G_CS_MES); 
+
 	if (params != "destroy") {
 		EVENT_WAIT(WaitRecivedMessage,WaitMessageMutex);
 	}
+
 	DESTROY_EVENT(WaitRecivedMessage);
-#ifndef _WIN32
 	DESTROY_ATOM(WaitMessageMutex);
-#endif
+
 	testStringSuccess(pairParams.second);
 
 	return pairParams.second;
