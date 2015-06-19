@@ -4,16 +4,16 @@
 *
 */
 #ifdef _WIN32
-	#define _WINSOCK_DEPRECATED_NO_WARNINGS
 	#define _CRT_SECURE_NO_WARNINGS 
 	#define _SCL_SECURE_NO_WARNINGS
 #endif
 
-#include <iostream>
+#include <string>
 #include <vector>
 
 #ifdef _WIN32
 	#include <windows.h>
+	#include <stdlib.h> 
 #else
 	#include <fcntl.h>
 	#include <dlfcn.h>
@@ -101,13 +101,16 @@ int u3dRobotModule::init(){
 
 	WCHAR DllPath[MAX_PATH] = { 0 };
 
-	GetModuleFileNameW((HINSTANCE)&__ImageBase, DllPath, _countof(DllPath));
+	GetModuleFileNameW((HINSTANCE)&__ImageBase, DllPath, (DWORD) MAX_PATH);
 
 	WCHAR *tmp = wcsrchr(DllPath, L'\\');
-	WCHAR ConfigPath[MAX_PATH] = { 0 };
+	WCHAR wConfigPath[MAX_PATH] = { 0 };
 	size_t path_len = tmp - DllPath;
-	wcsncpy(ConfigPath, DllPath, path_len);
-	wcscat(ConfigPath, L"\\config.ini");
+	wcsncpy(wConfigPath, DllPath, path_len);
+	wcscat(wConfigPath, L"\\config.ini");
+
+	char ConfigPath[MAX_PATH] = {0};
+	wcstombs(ConfigPath,wConfigPath,sizeof(ConfigPath));
 #else
 	pthread_mutex_init(&VRM_cs, NULL);
 
@@ -141,11 +144,11 @@ int u3dRobotModule::init(){
 
 	for (ini_value = values.begin(); ini_value != values.end(); ++ini_value) {
 		colorPrintf(this, ConsoleColor(ConsoleColor::white), "Attemp to connect: %s\n", ini_value->pItem);
-		int port = std::stoi(ini_value->pItem);
+		int port = atoi(ini_value->pItem);
 
 		std::string temp(IP.begin()->pItem);
 		initConnection(port, temp);
-		initWorld(std::stoi(x.begin()->pItem), std::stoi(y.begin()->pItem), std::stoi(z.begin()->pItem));
+		initWorld(atoi(x.begin()->pItem), atoi(y.begin()->pItem), atoi(z.begin()->pItem));
 	}
 	return 0;
 };
@@ -258,8 +261,11 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 	};
 };
 
-int u3dRobotModule::startProgram(int uniq_index, void *buffer, unsigned int buffer_length) {
+int u3dRobotModule::startProgram(int uniq_index) {
 	return 0;
+}
+
+void u3dRobotModule::readPC(void *buffer, unsigned int buffer_length) {
 }
 
 int u3dRobotModule::endProgram(int uniq_index) {

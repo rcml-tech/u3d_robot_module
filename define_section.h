@@ -3,9 +3,14 @@
 	#define _CRT_SECURE_NO_WARNINGS 
 	#define _SCL_SECURE_NO_WARNINGS
 	
-	#include <windows.h>
+	#include <stdio.h>
+	#include <stdlib.h>
 	#include <WinSock2.h>
-	#pragma comment(lib, "ws2_32") //link to dll
+	#include <process.h>
+
+	#ifdef _MSC_VER
+		#pragma comment(lib, "Ws2_32.lib") //link to dll
+	#endif
 #else
 	#include <pthread.h>
 	#include <arpa/inet.h>
@@ -19,7 +24,7 @@
 
 #ifdef _WIN32
 	//Typedefs section
-	typedef unsigned int THREAD_HANDLE;
+	typedef HANDLE THREAD_HANDLE;
 	typedef HANDLE* PTR_EVENT_HANDLE;
 
 	//Threads and Atoms section
@@ -30,10 +35,11 @@
 	#define DEFINE_THREAD_PROCEDURE(PROC_NAME) unsigned int WINAPI PROC_NAME( void* arg )
 	#define ATOM_LOCK(ATOM_NAME) EnterCriticalSection( &ATOM_NAME );
 	#define ATOM_UNLOCK(ATOM_NAME) LeaveCriticalSection( &ATOM_NAME );
+	#define DESTROY_ATOM(ATOM_NAME) DeleteCriticalSection(&ATOM_NAME);
 	#define EVENT_WAIT(EVENT_NAME,ATOM_NAME) \
 		if (WaitForSingleObject(EVENT_NAME, INFINITE) == WAIT_FAILED) \
 		{ \
-			addLog("beda\n"); \
+			printf("beda\n"); \
 		}
 	#define EVENT_SEND(EVENT_NAME) SetEvent(EVENT_NAME)
 	#define START_THREAD_DEMON(PROC_NAME,PARAM,THREAD_ID) \
@@ -43,7 +49,7 @@
 	#define SOCKET_CLOSE(SOCKET_NAME,ERROR_DESCRIPTION) \
 		if (closesocket(SOCKET_NAME) == SOCKET_ERROR) \
 		{ \
-			addLog(ERROR_DESCRIPTION,WSAGetLastError()); \
+			printf(ERROR_DESCRIPTION,WSAGetLastError()); \
 		}
 	#define SOCKET_NON_BLOCK(SOCKET_NAME,ERROR_DESCRIPTION) \
 		u_long iMode = 1;\
@@ -68,6 +74,7 @@
 	#define DEFINE_THREAD_PROCEDURE(PROC_NAME) void * PROC_NAME(void *arg)
 	#define ATOM_LOCK(ATOM_NAME) pthread_mutex_lock( &ATOM_NAME )
 	#define ATOM_UNLOCK(ATOM_NAME) pthread_mutex_unlock( &ATOM_NAME )
+	#define DESTROY_ATOM(ATOM_NAME) pthread_mutex_destroy(&ATOM_NAME);
 	#define EVENT_WAIT(EVENT_NAME,ATOM_NAME) { \
 			pthread_mutex_lock(&ATOM_NAME);\
 			pthread_cond_wait(&EVENT_NAME,&ATOM_NAME);\
