@@ -214,8 +214,9 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 	if ((functionId < 1) || (functionId > (int) COUNT_u3dRobot_FUNCTIONS)) {
 		return NULL;
 	}
-	variable_value rez = 0;
+	
 	try {
+    variable_value rez = 0;
 		switch (functionId) {
 		case 1: { // spawn
 			variable_value *input1 = (variable_value *) args[0];
