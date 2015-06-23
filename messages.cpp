@@ -273,7 +273,9 @@ std::string createMessage(std::string params){
 	}
 
 	DESTROY_EVENT(WaitRecivedMessage);
+#ifndef _WIN32
 	DESTROY_ATOM(WaitMessageMutex);
+#endif
 
 	testStringSuccess(pairParams.second);
 
