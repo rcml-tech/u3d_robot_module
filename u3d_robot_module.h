@@ -5,21 +5,23 @@
 */
 #ifndef VIRTUAL_ROBOT_MODULE_H
 #define	VIRTUAL_ROBOT_MODULE_H
+
 class u3dRobot : public Robot {
-public:
-	int robot_index;
+	public:
+		int robot_index;
 	
-	std::vector<variable_value> axis_state;
-	u3dRobot(int robot_index) : robot_index(0){};
-	FunctionResult* executeFunction(system_value command_index, void **args);
-	void axisControl(system_value axis_index, variable_value value);
-	~u3dRobot() {};
+		std::vector<variable_value> axis_state;
+		u3dRobot(): robot_index(0) {};
+		FunctionResult* executeFunction(system_value command_index, void **args);
+		void axisControl(system_value axis_index, variable_value value);
+		~u3dRobot() {};
 };
 
 typedef std::vector<u3dRobot*> m_connections;
 
 class u3dRobotModule : public RobotModule{
-	CRITICAL_SECTION VRM_cs;
+	DEFINE_ATOM(VRM_cs);
+
 	m_connections aviable_connections;
 	FunctionData **u3drobot_functions;
 	AxisData **robot_axis;
@@ -43,8 +45,11 @@ class u3dRobotModule : public RobotModule{
 		void robotFree(Robot *robot);
 		void final();
 
+		//intepreter - program & lib
+		void readPC(void *buffer, unsigned int buffer_length);
+	
 		//intepreter - program
-		int startProgram(int uniq_index, void *buffer, unsigned int buffer_length);
+		int startProgram(int uniq_index);
 		int endProgram(int uniq_index);
 
 		//destructor
