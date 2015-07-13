@@ -13,6 +13,7 @@
 #include <stdlib.h> 
 #include <string>
 #include <vector>
+#include <stdarg.h>
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -79,8 +80,12 @@ u3dRobotModule::u3dRobotModule() {
 	u3drobot_functions[function_id] = new FunctionData(function_id+1, 0, NULL, "getY");
 };
 
-void u3dRobotModule::prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p) {
-	colorPrintf = colorPrintf_p;
+void u3dRobotModule::prepare(colorPrintfModule_t *colorPrintf_p, colorPrintfModuleVA_t *colorPrintfVA_p) {
+	this->colorPrintf_p = colorPrintfVA_p;
+}
+
+void u3dRobot::prepare(colorPrintfRobot_t *colorPrintf_p, colorPrintfRobotVA_t *colorPrintfVA_p) {
+	this->colorPrintf_p = colorPrintfVA_p;
 }
 
 const char* u3dRobotModule::getUID() {
@@ -125,7 +130,7 @@ int u3dRobotModule::init(){
 	const char *ConfigPath = dltemp.c_str();
 #endif
 	if (ini.LoadFile(ConfigPath) < 0) {
-		colorPrintf(this, ConsoleColor(ConsoleColor::red), "Can't load '%s' file!\n", ConfigPath);
+		colorPrintf(ConsoleColor(ConsoleColor::red), "Can't load '%s' file!\n", ConfigPath);
 		return 1;
 	}
 
@@ -141,7 +146,7 @@ int u3dRobotModule::init(){
 	CSimpleIniA::TNamesDepend::const_iterator ini_value;
 
 	for (ini_value = values.begin(); ini_value != values.end(); ++ini_value) {
-		colorPrintf(this, ConsoleColor(ConsoleColor::white), "Attemp to connect: %s\n", ini_value->pItem);
+		colorPrintf(ConsoleColor(ConsoleColor::white), "Attemp to connect: %s\n", ini_value->pItem);
 		int port = atoi(ini_value->pItem);
 
 		std::string temp(IP.begin()->pItem);
@@ -154,7 +159,8 @@ int u3dRobotModule::init(){
 
 Robot* u3dRobotModule::robotRequire(){
 	ATOM_LOCK(VRM_cs);
-	u3dRobot *u3d_robot = new u3dRobot();
+	unsigned int temp =1;
+	u3dRobot *u3d_robot = new u3dRobot(temp); // We have 1 robot
 	aviable_connections.push_back(u3d_robot);
 
 	Robot *robot = u3d_robot;
@@ -271,6 +277,29 @@ int u3dRobotModule::endProgram(int uniq_index) {
 	return 0;
 }
 
+
+void u3dRobotModule::colorPrintf(ConsoleColor colors, const char *mask, ...) {
+	va_list args;
+	va_start(args, mask);
+	(*colorPrintf_p)(this, colors, mask, args);
+	va_end(args);
+}
+
+u3dRobot::~u3dRobot() {
+	delete[] uniq_name;
+}
+
+void u3dRobot::colorPrintf(ConsoleColor colors, const char *mask, ...) {
+	va_list args;
+	va_start(args, mask);
+	(*colorPrintf_p)(this, uniq_name, colors, mask, args);
+	va_end(args);
+}
+
+u3dRobot::u3dRobot(unsigned int uniq_index): robot_index(0) {
+	uniq_name = new char[40];
+	sprintf(uniq_name, "robot-%u", uniq_index);
+};
 
 PREFIX_FUNC_DLL RobotModule* getRobotModuleObject() {
 	return new u3dRobotModule();
