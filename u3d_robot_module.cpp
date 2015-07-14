@@ -159,8 +159,7 @@ int u3dRobotModule::init(){
 
 Robot* u3dRobotModule::robotRequire(){
 	ATOM_LOCK(VRM_cs);
-	unsigned int temp =1;
-	u3dRobot *u3d_robot = new u3dRobot(temp); // We have 1 robot
+	u3dRobot *u3d_robot = new u3dRobot();
 	aviable_connections.push_back(u3d_robot);
 
 	Robot *robot = u3d_robot;
@@ -285,21 +284,12 @@ void u3dRobotModule::colorPrintf(ConsoleColor colors, const char *mask, ...) {
 	va_end(args);
 }
 
-u3dRobot::~u3dRobot() {
-	delete[] uniq_name;
-}
-
 void u3dRobot::colorPrintf(ConsoleColor colors, const char *mask, ...) {
 	va_list args;
 	va_start(args, mask);
-	(*colorPrintf_p)(this, uniq_name, colors, mask, args);
+	(*colorPrintf_p)(this, NULL, colors, mask, args);
 	va_end(args);
 }
-
-u3dRobot::u3dRobot(unsigned int uniq_index): robot_index(0) {
-	uniq_name = new char[40];
-	sprintf(uniq_name, "robot-%u", uniq_index);
-};
 
 PREFIX_FUNC_DLL RobotModule* getRobotModuleObject() {
 	return new u3dRobotModule();

@@ -7,18 +7,17 @@
 #define	VIRTUAL_ROBOT_MODULE_H
 
 class u3dRobot : public Robot {
-	char *uniq_name;
 	colorPrintfRobotVA_t *colorPrintf_p;
 
 	public:
 		int robot_index;
 	
 		std::vector<variable_value> axis_state;
-		u3dRobot(unsigned int uniq_index);
+		u3dRobot(): robot_index(0) {};
 		void prepare(colorPrintfRobot_t *colorPrintf_p, colorPrintfRobotVA_t *colorPrintfVA_p);
 		FunctionResult* executeFunction(system_value command_index, void **args);
 		void axisControl(system_value axis_index, variable_value value);
-		~u3dRobot();
+		~u3dRobot(){};
 
 		void colorPrintf(ConsoleColor colors, const char *mask, ...);
 };
