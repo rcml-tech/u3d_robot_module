@@ -13,6 +13,7 @@
 #include <stdlib.h> 
 #include <string>
 #include <vector>
+#include <stdarg.h>
 
 #ifdef _WIN32
 	#include <windows.h>
@@ -79,8 +80,12 @@ u3dRobotModule::u3dRobotModule() {
 	u3drobot_functions[function_id] = new FunctionData(function_id+1, 0, NULL, "getY");
 };
 
-void u3dRobotModule::prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p) {
-	colorPrintf = colorPrintf_p;
+void u3dRobotModule::prepare(colorPrintfModule_t *colorPrintf_p, colorPrintfModuleVA_t *colorPrintfVA_p) {
+	this->colorPrintf_p = colorPrintfVA_p;
+}
+
+void u3dRobot::prepare(colorPrintfRobot_t *colorPrintf_p, colorPrintfRobotVA_t *colorPrintfVA_p) {
+	this->colorPrintf_p = colorPrintfVA_p;
 }
 
 const char* u3dRobotModule::getUID() {
@@ -125,7 +130,7 @@ int u3dRobotModule::init(){
 	const char *ConfigPath = dltemp.c_str();
 #endif
 	if (ini.LoadFile(ConfigPath) < 0) {
-		colorPrintf(this, ConsoleColor(ConsoleColor::red), "Can't load '%s' file!\n", ConfigPath);
+		colorPrintf(ConsoleColor(ConsoleColor::red), "Can't load '%s' file!\n", ConfigPath);
 		return 1;
 	}
 
@@ -141,7 +146,7 @@ int u3dRobotModule::init(){
 	CSimpleIniA::TNamesDepend::const_iterator ini_value;
 
 	for (ini_value = values.begin(); ini_value != values.end(); ++ini_value) {
-		colorPrintf(this, ConsoleColor(ConsoleColor::white), "Attemp to connect: %s\n", ini_value->pItem);
+		colorPrintf(ConsoleColor(ConsoleColor::white), "Attemp to connect: %s\n", ini_value->pItem);
 		int port = atoi(ini_value->pItem);
 
 		std::string temp(IP.begin()->pItem);
@@ -271,6 +276,20 @@ int u3dRobotModule::endProgram(int uniq_index) {
 	return 0;
 }
 
+
+void u3dRobotModule::colorPrintf(ConsoleColor colors, const char *mask, ...) {
+	va_list args;
+	va_start(args, mask);
+	(*colorPrintf_p)(this, colors, mask, args);
+	va_end(args);
+}
+
+void u3dRobot::colorPrintf(ConsoleColor colors, const char *mask, ...) {
+	va_list args;
+	va_start(args, mask);
+	(*colorPrintf_p)(this, NULL, colors, mask, args);
+	va_end(args);
+}
 
 PREFIX_FUNC_DLL RobotModule* getRobotModuleObject() {
 	return new u3dRobotModule();

@@ -7,14 +7,19 @@
 #define	VIRTUAL_ROBOT_MODULE_H
 
 class u3dRobot : public Robot {
+	colorPrintfRobotVA_t *colorPrintf_p;
+
 	public:
 		int robot_index;
 	
 		std::vector<variable_value> axis_state;
 		u3dRobot(): robot_index(0) {};
+		void prepare(colorPrintfRobot_t *colorPrintf_p, colorPrintfRobotVA_t *colorPrintfVA_p);
 		FunctionResult* executeFunction(system_value command_index, void **args);
 		void axisControl(system_value axis_index, variable_value value);
-		~u3dRobot() {};
+		~u3dRobot(){};
+
+		void colorPrintf(ConsoleColor colors, const char *mask, ...);
 };
 
 typedef std::vector<u3dRobot*> m_connections;
@@ -25,14 +30,14 @@ class u3dRobotModule : public RobotModule{
 	m_connections aviable_connections;
 	FunctionData **u3drobot_functions;
 	AxisData **robot_axis;
-	colorPrintf_t *colorPrintf;
+	colorPrintfModuleVA_t *colorPrintf_p;
 
 	public:
 		u3dRobotModule();
 
 		//init
 		const char *getUID();
-		void prepare(colorPrintf_t *colorPrintf_p, colorPrintfVA_t *colorPrintfVA_p);
+		void prepare(colorPrintfModule_t *colorPrintf_p, colorPrintfModuleVA_t *colorPrintfVA_p);
 
 		//compiler only
 		FunctionData** getFunctions(unsigned int *count_functions);
@@ -55,5 +60,7 @@ class u3dRobotModule : public RobotModule{
 		//destructor
 		void destroy();
 		~u3dRobotModule(){};
+
+		void colorPrintf(ConsoleColor colors, const char *mask, ...);
 };
 #endif	/* VIRTUAL_ROBOT_MODULE_H */
