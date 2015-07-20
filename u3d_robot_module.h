@@ -8,16 +8,16 @@
 
 class u3dRobot : public Robot {
 	colorPrintfRobotVA_t *colorPrintf_p;
-
+	char *uniq_name;
 	public:
 		int robot_index;
 	
 		std::vector<variable_value> axis_state;
-		u3dRobot(): robot_index(0) {};
+		u3dRobot();
 		void prepare(colorPrintfRobot_t *colorPrintf_p, colorPrintfRobotVA_t *colorPrintfVA_p);
-		FunctionResult* executeFunction(system_value command_index, void **args);
+		FunctionResult* executeFunction(CommandMode mode, system_value command_index, void **args);
 		void axisControl(system_value axis_index, variable_value value);
-		~u3dRobot(){};
+		~u3dRobot();
 
 		void colorPrintf(ConsoleColor colors, const char *mask, ...);
 };
