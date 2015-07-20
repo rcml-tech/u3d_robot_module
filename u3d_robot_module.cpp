@@ -215,7 +215,7 @@ void *u3dRobotModule::writePC(unsigned int *buffer_length) {
 	return NULL;
 }
 
-FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) {
+FunctionResult* u3dRobot::executeFunction(CommandMode mode, system_value functionId, void **args) {
 	if ((functionId < 1) || (functionId > (int) COUNT_u3dRobot_FUNCTIONS)) {
 		return NULL;
 	}
@@ -224,6 +224,7 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
     variable_value rez = 0;
 		switch (functionId) {
 		case 1: { // spawn
+			if (robot_index){ throw std::exception(); }
 			variable_value *input1 = (variable_value *) args[0];
 			variable_value *input2 = (variable_value *) args[1];
 			variable_value *input3 = (variable_value *) args[2];
@@ -231,6 +232,8 @@ FunctionResult* u3dRobot::executeFunction(system_value functionId, void **args) 
 			variable_value *input5 = (variable_value *) args[4];
 			std::string input6( (const char *) args[5]);
 			robot_index = createRobot((int) *input1, (int) *input2, (int) *input3, (int) *input4, (int) *input5, input6);
+			uniq_name = new char[40];
+			sprintf(uniq_name, "robot-%u", robot_index);
 			break;
 		}
 		case 2: { // move 
@@ -290,6 +293,16 @@ void u3dRobot::colorPrintf(ConsoleColor colors, const char *mask, ...) {
 	(*colorPrintf_p)(this, NULL, colors, mask, args);
 	va_end(args);
 }
+
+u3dRobot::~u3dRobot() {
+	if (!uniq_name){
+    	delete[] uniq_name;
+	}
+}
+
+u3dRobot::u3dRobot(): robot_index(0) {
+    uniq_name = NULL;
+};
 
 PREFIX_FUNC_DLL RobotModule* getRobotModuleObject() {
 	return new u3dRobotModule();
