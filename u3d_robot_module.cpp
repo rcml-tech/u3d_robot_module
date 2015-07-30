@@ -5,9 +5,7 @@
 */
 
 #ifdef _WIN32
-	#define _WINSOCK_DEPRECATED_NO_WARNINGS
 	#define _CRT_SECURE_NO_WARNINGS 
-	#define _SCL_SECURE_NO_WARNINGS
 #endif
 
 #include <stdlib.h> 
@@ -16,7 +14,6 @@
 #include <stdarg.h>
 
 #ifdef _WIN32
-	#include <windows.h>
 #else
 	#include <fcntl.h>
 	#include <dlfcn.h>
@@ -25,29 +22,37 @@
 	#include <sys/socket.h>
 #endif
 
-#include "SimpleIni.h"
-
-#include "define_section.h"
+#include <boost/thread.hpp>
 
 #include "module.h"
 #include "robot_module.h"
 #include "u3d_robot_module.h"
 
-#include "messages.h"
-
-#ifdef _WIN32
-	EXTERN_C IMAGE_DOS_HEADER __ImageBase;
-#endif
+#include "messages_functions.h"
 
 /////////
-const unsigned int COUNT_u3dRobot_FUNCTIONS = 5;
+const unsigned int COUNT_u3dRobot_FUNCTIONS = 9;
 const unsigned int COUNT_AXIS = 0;
 
 u3dRobotModule::u3dRobotModule() {
 	u3drobot_functions = new FunctionData*[COUNT_u3dRobot_FUNCTIONS];
 	system_value function_id = 0;
 
-	FunctionData::ParamTypes *Params = new FunctionData::ParamTypes[6];
+	FunctionData::ParamTypes *Params = new FunctionData::ParamTypes[9];
+	Params[0] = FunctionData::ParamTypes::FLOAT;
+	Params[1] = FunctionData::ParamTypes::FLOAT;
+	Params[2] = FunctionData::ParamTypes::FLOAT;
+	Params[3] = FunctionData::ParamTypes::FLOAT;
+	Params[4] = FunctionData::ParamTypes::FLOAT;
+	Params[5] = FunctionData::ParamTypes::FLOAT;
+	Params[6] = FunctionData::ParamTypes::FLOAT;
+	Params[7] = FunctionData::ParamTypes::FLOAT;
+	Params[8] = FunctionData::ParamTypes::STRING;
+
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 9, Params, "createCubeRobot");
+	function_id++;
+
+	Params = new FunctionData::ParamTypes[6];
 	Params[0] = FunctionData::ParamTypes::FLOAT;
 	Params[1] = FunctionData::ParamTypes::FLOAT;
 	Params[2] = FunctionData::ParamTypes::FLOAT;
@@ -55,29 +60,52 @@ u3dRobotModule::u3dRobotModule() {
 	Params[4] = FunctionData::ParamTypes::FLOAT;
 	Params[5] = FunctionData::ParamTypes::STRING;
 
-	u3drobot_functions[function_id] = new FunctionData(function_id+1, 6, Params, "spawn");
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 6, Params, "createSphereRobot");
 	function_id++;
 
-
-	Params = new FunctionData::ParamTypes[3];
+	Params = new FunctionData::ParamTypes[10];
 	Params[0] = FunctionData::ParamTypes::FLOAT;
 	Params[1] = FunctionData::ParamTypes::FLOAT;
 	Params[2] = FunctionData::ParamTypes::FLOAT;
+	Params[3] = FunctionData::ParamTypes::FLOAT;
+	Params[4] = FunctionData::ParamTypes::FLOAT;
+	Params[5] = FunctionData::ParamTypes::FLOAT;
+	Params[6] = FunctionData::ParamTypes::FLOAT;
+	Params[7] = FunctionData::ParamTypes::FLOAT;
+	Params[8] = FunctionData::ParamTypes::STRING;
+	Params[9] = FunctionData::ParamTypes::STRING;
 
-	u3drobot_functions[function_id] = new FunctionData(function_id+1, 3, Params, "move");
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 10, Params, "createModelRobot");
 	function_id++;
-
 
 	Params = new FunctionData::ParamTypes[1];
 	Params[0] = FunctionData::ParamTypes::STRING;
 
-	u3drobot_functions[function_id] = new FunctionData(function_id+1, 1, Params, "changeColor");
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 1, Params, "changeColor");
 	function_id++;
 
+	Params = new FunctionData::ParamTypes[6];
+	Params[0] = FunctionData::ParamTypes::FLOAT;
+	Params[1] = FunctionData::ParamTypes::FLOAT;
+	Params[2] = FunctionData::ParamTypes::FLOAT;
+	Params[3] = FunctionData::ParamTypes::FLOAT;
+	Params[4] = FunctionData::ParamTypes::FLOAT;
+	Params[5] = FunctionData::ParamTypes::FLOAT;
 
-	u3drobot_functions[function_id] = new FunctionData(function_id+1, 0, NULL, "getX");
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 6, Params, "move");
 	function_id++;
-	u3drobot_functions[function_id] = new FunctionData(function_id+1, 0, NULL, "getY");
+
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 0, NULL, "getX");
+	function_id++;
+
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 0, NULL, "getY");
+	function_id++;
+
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 0, NULL, "getZ");
+	function_id++;
+
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 0, NULL, "getAngle");
+
 };
 
 void u3dRobotModule::prepare(colorPrintfModule_t *colorPrintf_p, colorPrintfModuleVA_t *colorPrintfVA_p) {
@@ -89,7 +117,7 @@ void u3dRobot::prepare(colorPrintfRobot_t *colorPrintf_p, colorPrintfRobotVA_t *
 }
 
 const char* u3dRobotModule::getUID() {
-	return "u3dRobot_functions_dll";
+	return "u3dRobot_module_dll";
 };
 
 FunctionData** u3dRobotModule::getFunctions(unsigned int *count_functions) {
@@ -98,78 +126,23 @@ FunctionData** u3dRobotModule::getFunctions(unsigned int *count_functions) {
 }
 
 int u3dRobotModule::init(){
-	CSimpleIniA ini;
-	ini.SetMultiKey(true);
-
-#ifdef _WIN32
-	InitializeCriticalSection(&VRM_cs);
-
-	WCHAR DllPath[MAX_PATH] = { 0 };
-
-	GetModuleFileNameW((HINSTANCE)&__ImageBase, DllPath, (DWORD) MAX_PATH);
-
-	WCHAR *tmp = wcsrchr(DllPath, L'\\');
-	WCHAR wConfigPath[MAX_PATH] = { 0 };
-	size_t path_len = tmp - DllPath;
-	wcsncpy(wConfigPath, DllPath, path_len);
-	wcscat(wConfigPath, L"\\config.ini");
-
-	char ConfigPath[MAX_PATH] = {0};
-	wcstombs(ConfigPath,wConfigPath,sizeof(ConfigPath));
-#else
-	Dl_info PathToSharedObject;
-	void *pointer = reinterpret_cast<void*>(getRobotModuleObject);
-	dladdr(pointer, &PathToSharedObject);
-	std::string dltemp(PathToSharedObject.dli_fname);
-
-	int dlfound = dltemp.find_last_of("/");
-
-	dltemp = dltemp.substr(0, dlfound);
-	dltemp += "/config.ini";
-
-	const char *ConfigPath = dltemp.c_str();
-#endif
-	if (ini.LoadFile(ConfigPath) < 0) {
-		colorPrintf(ConsoleColor(ConsoleColor::red), "Can't load '%s' file!\n", ConfigPath);
-		return 1;
-	}
-
-	CSimpleIniA::TNamesDepend values;
-	CSimpleIniA::TNamesDepend IP;
-	CSimpleIniA::TNamesDepend x, y, z;
-	ini.GetAllValues("connection", "port", values);
-	ini.GetAllValues("connection", "ip", IP);
-	ini.GetAllValues("world", "x", x);
-	ini.GetAllValues("world", "y", y);
-	ini.GetAllValues("world", "z", z);
-
-	CSimpleIniA::TNamesDepend::const_iterator ini_value;
-
-	for (ini_value = values.begin(); ini_value != values.end(); ++ini_value) {
-		colorPrintf(ConsoleColor(ConsoleColor::white), "Attemp to connect: %s\n", ini_value->pItem);
-		int port = atoi(ini_value->pItem);
-
-		std::string temp(IP.begin()->pItem);
-		initConnection(port, temp);
-		initWorld(atoi(x.begin()->pItem), atoi(y.begin()->pItem), atoi(z.begin()->pItem));
-	}
 	return 0;
 };
 
 
 Robot* u3dRobotModule::robotRequire(){
-	ATOM_LOCK(VRM_cs);
+	module_mutex.lock();
 	u3dRobot *u3d_robot = new u3dRobot();
 	aviable_connections.push_back(u3d_robot);
 
 	Robot *robot = u3d_robot;
-	ATOM_UNLOCK(VRM_cs);
+	module_mutex.unlock();
 	return robot;
 };
 
 
 void u3dRobotModule::robotFree(Robot *robot){
-	ATOM_LOCK(VRM_cs);
+	module_mutex.lock();
 	u3dRobot *u3d_robot = reinterpret_cast<u3dRobot*>(robot);
 	for (m_connections::iterator i = aviable_connections.begin(); i != aviable_connections.end(); ++i) {
 		if (u3d_robot == *i){
@@ -181,14 +154,12 @@ void u3dRobotModule::robotFree(Robot *robot){
 			break;
 		};
 	}
-	ATOM_UNLOCK(VRM_cs);
+	module_mutex.unlock();
 };
 
 
 void u3dRobotModule::final(){
-	destroyWorld();
 	aviable_connections.clear();
-	closeSocketConnection();
 };
 
 void u3dRobotModule::destroy() {
@@ -219,45 +190,98 @@ FunctionResult* u3dRobot::executeFunction(CommandMode mode, system_value functio
 	if ((functionId < 1) || (functionId > (int) COUNT_u3dRobot_FUNCTIONS)) {
 		return NULL;
 	}
+
+	bool is_read_from_shared_memory = returnIsReadSharedMemory();
+	if (!is_read_from_shared_memory){
+		readSharedMemory();
+	}
 	
 	try {
-    variable_value rez = 0;
+		bool *temp_flag = returnIsWorldInitializedFlag();
+		if (!(*temp_flag)){ throw std::exception(); }
+		variable_value rez = 0;
 		switch (functionId) {
-		case 1: { // spawn
+		case 1: { // createCubeRobot
 			if (robot_index){ throw std::exception(); }
-			variable_value *input1 = (variable_value *) args[0];
-			variable_value *input2 = (variable_value *) args[1];
-			variable_value *input3 = (variable_value *) args[2];
-			variable_value *input4 = (variable_value *) args[3];
-			variable_value *input5 = (variable_value *) args[4];
-			std::string input6( (const char *) args[5]);
-			robot_index = createRobot((int) *input1, (int) *input2, (int) *input3, (int) *input4, (int) *input5, input6);
+			variable_value *input1 = (variable_value *)args[0];
+			variable_value *input2 = (variable_value *)args[1];
+			variable_value *input3 = (variable_value *)args[2];
+			variable_value *input4 = (variable_value *)args[3];
+			variable_value *input5 = (variable_value *)args[4];
+			variable_value *input6 = (variable_value *)args[5];
+			variable_value *input7 = (variable_value *)args[6];
+			variable_value *input8 = (variable_value *)args[7];
+			std::string input9((const char *)args[8]);
+			robot_index = createCube((int)*input1, (int)*input2, (int)*input3, (int)*input4, (int)*input5, (int)*input6, (int)*input7, (int)*input8, input9);
 			uniq_name = new char[40];
 			sprintf(uniq_name, "robot-%u", robot_index);
 			break;
 		}
-		case 2: { // move 
-			if (!robot_index){ throw std::exception(); }
-			variable_value *input1 = (variable_value *) args[0];
-			variable_value *input2 = (variable_value *) args[1];
-			variable_value *input3 = (variable_value *) args[2];
-			moveRobot(robot_index, (int)*input1, (int)*input2, (int)*input3);
+		case 2:{ // createSphereRobot
+			if (robot_index){ throw std::exception(); }
+			variable_value *input1 = (variable_value *)args[0];
+			variable_value *input2 = (variable_value *)args[1];
+			variable_value *input3 = (variable_value *)args[2];
+			variable_value *input4 = (variable_value *)args[3];
+			variable_value *input5 = (variable_value *)args[4];
+			std::string input6((const char *)args[5]);
+			robot_index = createSphere((int)*input1, (int)*input2, (int)*input3, (int)*input4, (int)*input5, input6);
+			uniq_name = new char[40];
+			sprintf(uniq_name, "robot-%u", robot_index);
 			break;
 		}
-		case 3: { // change Color
-			if (!robot_index){ throw std::exception(); }
-			std::string input1( (const char *) args[0] );
-			colorRobot(robot_index, input1);
+		case 3:{ // createModelRobot
+			if (robot_index){ throw std::exception(); }
+			variable_value *input1 = (variable_value *)args[0];
+			variable_value *input2 = (variable_value *)args[1];
+			variable_value *input3 = (variable_value *)args[2];
+			variable_value *input4 = (variable_value *)args[3];
+			variable_value *input5 = (variable_value *)args[4];
+			variable_value *input6 = (variable_value *)args[5];
+			variable_value *input7 = (variable_value *)args[6];
+			variable_value *input8 = (variable_value *)args[7];
+			std::string input9((const char *)args[8]);
+			std::string input10((const char *)args[9]);
+			robot_index = createModel((int)*input1, (int)*input2, (int)*input3, (int)*input4, (int)*input5, (int)*input6, (int)*input7, (int)*input8, input9, input10);
+			uniq_name = new char[40];
+			sprintf(uniq_name, "robot-%u", robot_index);
 			break;
 		}
-		case 4: { // getX
+		case 4: { // change Color
 			if (!robot_index){ throw std::exception(); }
-			rez = coordsRobotX(robot_index);
+			std::string input1((const char *)args[0]);
+			changeColor(robot_index, input1);
 			break;
 		}
-		case 5: { // getY
+		case 5: { // moveObject
 			if (!robot_index){ throw std::exception(); }
-			rez = coordsRobotY(robot_index);
+			variable_value *input1 = (variable_value *)args[0];
+			variable_value *input2 = (variable_value *)args[1];
+			variable_value *input3 = (variable_value *)args[2];
+			variable_value *input4 = (variable_value *)args[3];
+			variable_value *input5 = (variable_value *)args[4];
+			variable_value *input6 = (variable_value *)args[5];
+			moveObject(robot_index, (int)*input1, (int)*input2, (int)*input3, (int)*input4, (int)*input5, (int)*input6);
+			break;
+		}
+		case 6: { // getX
+			if (!robot_index){ throw std::exception(); }
+			rez = getX(robot_index);
+			break;
+		}
+		case 7: { // getY
+			if (!robot_index){ throw std::exception(); }
+			rez = getY(robot_index);
+			break;
+		}
+		case 8: { // getZ
+			if (!robot_index){ throw std::exception(); }
+			rez = getZ(robot_index);
+			break;
+		}
+		case 9: { // getAngle
+			if (!robot_index){ throw std::exception(); }
+			rez = getAngle(robot_index);
 			break;
 		}
 		};

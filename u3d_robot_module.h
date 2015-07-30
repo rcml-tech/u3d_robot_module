@@ -25,7 +25,7 @@ class u3dRobot : public Robot {
 typedef std::vector<u3dRobot*> m_connections;
 
 class u3dRobotModule : public RobotModule{
-	DEFINE_ATOM(VRM_cs);
+	boost::mutex module_mutex;
 
 	m_connections aviable_connections;
 	FunctionData **u3drobot_functions;
