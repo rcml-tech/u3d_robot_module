@@ -22,8 +22,20 @@
 #include "messages_functions.h"
 
 /////////
-const unsigned int COUNT_u3dRobot_FUNCTIONS = 9;
+const unsigned int COUNT_u3dRobot_FUNCTIONS = 10;
 const unsigned int COUNT_AXIS = 0;
+
+void testHold(int _hold){
+	switch (_hold){
+		case 0:
+		case 1:{
+			break;
+		}
+		default: {
+			throw std::exception();
+		}
+	}
+}
 
 u3dRobotModule::u3dRobotModule() {
 	u3drobot_functions = new FunctionData*[COUNT_u3dRobot_FUNCTIONS];
@@ -96,7 +108,12 @@ u3dRobotModule::u3dRobotModule() {
 	function_id++;
 
 	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 0, NULL, "getAngle");
+	function_id++;
 
+	Params = new FunctionData::ParamTypes[1];
+	Params[0] = FunctionData::ParamTypes::FLOAT;
+
+	u3drobot_functions[function_id] = new FunctionData(function_id + 1, 1, Params, "changeStatus");
 };
 
 void u3dRobotModule::prepare(colorPrintfModule_t *colorPrintf_p, colorPrintfModuleVA_t *colorPrintfVA_p) {
@@ -202,6 +219,7 @@ FunctionResult* u3dRobot::executeFunction(CommandMode mode, system_value functio
 			variable_value *input6 = (variable_value *)args[5];
 			variable_value *input7 = (variable_value *)args[6];
 			variable_value *input8 = (variable_value *)args[7];
+			testHold(*input8);
 			std::string input9((const char *)args[8]);
 			robot_index = createCube((int)*input1, (int)*input2, (int)*input3, (int)*input4, (int)*input5, (int)*input6, (int)*input7, (int)*input8, input9);
 			uniq_name = new char[40];
@@ -215,6 +233,7 @@ FunctionResult* u3dRobot::executeFunction(CommandMode mode, system_value functio
 			variable_value *input3 = (variable_value *)args[2];
 			variable_value *input4 = (variable_value *)args[3];
 			variable_value *input5 = (variable_value *)args[4];
+			testHold(*input5);
 			std::string input6((const char *)args[5]);
 			robot_index = createSphere((int)*input1, (int)*input2, (int)*input3, (int)*input4, (int)*input5, input6);
 			uniq_name = new char[40];
@@ -231,6 +250,7 @@ FunctionResult* u3dRobot::executeFunction(CommandMode mode, system_value functio
 			variable_value *input6 = (variable_value *)args[5];
 			variable_value *input7 = (variable_value *)args[6];
 			variable_value *input8 = (variable_value *)args[7];
+			testHold(*input8);
 			std::string input9((const char *)args[8]);
 			std::string input10((const char *)args[9]);
 			robot_index = createModel((int)*input1, (int)*input2, (int)*input3, (int)*input4, (int)*input5, (int)*input6, (int)*input7, (int)*input8, input9, input10);
@@ -273,6 +293,13 @@ FunctionResult* u3dRobot::executeFunction(CommandMode mode, system_value functio
 		case 9: { // getAngle
 			if (!robot_index){ throw std::exception(); }
 			rez = getAngle(robot_index);
+			break;
+		}
+		case 10: { // changeStatus
+			if (!robot_index){ throw std::exception(); }
+			variable_value *input1 = (variable_value *)args[0];
+			testHold(*input1);
+			changeStatus(robot_index, (int)*input1);
 			break;
 		}
 		};
