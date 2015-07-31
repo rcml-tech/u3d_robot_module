@@ -25,7 +25,7 @@ struct MutexAndBoxVector{
 };
 
 /// Helper Functions
-inline std::string returnStr(int _i);
+std::string returnStr(int _i);
 int extractUniq_Id(std::string str);
 bool *returnIsWorldInitializedFlag();
 void readSharedMemory();

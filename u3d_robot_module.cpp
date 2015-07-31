@@ -13,15 +13,6 @@
 #include <vector>
 #include <stdarg.h>
 
-#ifdef _WIN32
-#else
-	#include <fcntl.h>
-	#include <dlfcn.h>
-	#include <pthread.h>
-	#include <sys/types.h>
-	#include <sys/socket.h>
-#endif
-
 #include <boost/thread.hpp>
 
 #include "module.h"

@@ -27,19 +27,19 @@ clean:
 	@echo "-------------------------" 
 	rm -rf ${OBJECTDIR}
 
-messages.o:  messages.cpp
+messages_functions.o:  messages_functions.cpp
 	@echo "-------------------------" 
-	mkdir -p ${OBJECTDIR}
-	rm -f "${OBJECTDIR}/$@.d"
-	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/messages.o messages.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} -f "${OBJECTDIR}/$@.d"
+	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/messages_functions.o messages_functions.cpp
 
 u3d_robot_module.o:  u3d_robot_module.cpp
 	@echo "-------------------------" 
-	mkdir -p ${OBJECTDIR}
-	rm -f "${OBJECTDIR}/$@.d"
-	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/u3d_robot_module.o u3d_robot_module.cpp
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} -f "${OBJECTDIR}/$@.d"
+	$(COMPILE.cc) $(FLAGS) -o  ${OBJECTDIR}/u3d_robot_module.o u3d_robot_module.cpp
 
-module: messages.o u3d_robot_module.o 
+module: messages_functions.o u3d_robot_module.o
 	@echo "-------------------------" 
 	mkdir -p ${OBJECTDIR}
-	${LINK.cc} -m32 -shared ${OBJECTDIR}/u3d_robot_module.o ${OBJECTDIR}/messages.o -o ${OBJECTDIR}/u3d_module_$(FILENAME_FIX).so
+	${LINK.cc} -m32 -shared ${OBJECTDIR}/u3d_robot_module.o ${OBJECTDIR}/messages.o -o ${OBJECTDIR}/u3d_module_$(FILENAME_FIX).so -lboost_thread
