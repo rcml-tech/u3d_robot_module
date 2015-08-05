@@ -29,14 +29,14 @@ clean:
 
 messages_functions.o:  messages_functions.cpp
 	@echo "-------------------------" 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} -f "${OBJECTDIR}/$@.d"
+	mkdir -p ${OBJECTDIR}
+	rm -f "${OBJECTDIR}/$@.d"
 	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/messages_functions.o messages_functions.cpp
 
 u3d_robot_module.o:  u3d_robot_module.cpp
 	@echo "-------------------------" 
-	${MKDIR} -p ${OBJECTDIR}
-	${RM} -f "${OBJECTDIR}/$@.d"
+	mkdir -p ${OBJECTDIR}
+	rm -f "${OBJECTDIR}/$@.d"
 	$(COMPILE.cc) $(FLAGS) -o  ${OBJECTDIR}/u3d_robot_module.o u3d_robot_module.cpp
 
 module: messages_functions.o u3d_robot_module.o
