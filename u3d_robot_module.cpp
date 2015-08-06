@@ -24,6 +24,10 @@
 /////////
 const unsigned int COUNT_u3dRobot_FUNCTIONS = 10;
 const unsigned int COUNT_AXIS = 0;
+//From messages_functions.cpp
+extern bool *is_world_initialized;
+extern bool is_read_from_shared_memory;
+extern boost::mutex *box_mutex;
 
 void testHold(int _hold) {
   switch (_hold) {
@@ -202,141 +206,144 @@ FunctionResult *u3dRobot::executeFunction(CommandMode mode,
     return NULL;
   }
 
-  bool is_read_from_shared_memory = returnIsReadSharedMemory();
   if (!is_read_from_shared_memory) {
     readSharedMemory();
   }
 
   try {
-    bool *temp_flag = returnIsWorldInitializedFlag();
-    if (!(*temp_flag)) {
-      throw std::exception();
-    }
-    variable_value rez = 0;
-    switch (functionId) {
-      case 1: {  // createCubeRobot
-        if (robot_index) {
-          throw std::exception();
-        }
-        variable_value *input1 = (variable_value *)args[0];
-        variable_value *input2 = (variable_value *)args[1];
-        variable_value *input3 = (variable_value *)args[2];
-        variable_value *input4 = (variable_value *)args[3];
-        variable_value *input5 = (variable_value *)args[4];
-        variable_value *input6 = (variable_value *)args[5];
-        variable_value *input7 = (variable_value *)args[6];
-        variable_value *input8 = (variable_value *)args[7];
-        testHold(*input8);
-        std::string input9((const char *)args[8]);
-        robot_index = createCube((int)*input1, (int)*input2, (int)*input3,
-                                 (int)*input4, (int)*input5, (int)*input6,
-                                 (int)*input7, (int)*input8, input9);
-        uniq_name = new char[40];
-        sprintf(uniq_name, "robot-%u", robot_index);
-        break;
-      }
-      case 2: {  // createSphereRobot
-        if (robot_index) {
-          throw std::exception();
-        }
-        variable_value *input1 = (variable_value *)args[0];
-        variable_value *input2 = (variable_value *)args[1];
-        variable_value *input3 = (variable_value *)args[2];
-        variable_value *input4 = (variable_value *)args[3];
-        variable_value *input5 = (variable_value *)args[4];
-        testHold(*input5);
-        std::string input6((const char *)args[5]);
-        robot_index = createSphere((int)*input1, (int)*input2, (int)*input3,
-                                   (int)*input4, (int)*input5, input6);
-        uniq_name = new char[40];
-        sprintf(uniq_name, "robot-%u", robot_index);
-        break;
-      }
-      case 3: {  // createModelRobot
-        if (robot_index) {
-          throw std::exception();
-        }
-        variable_value *input1 = (variable_value *)args[0];
-        variable_value *input2 = (variable_value *)args[1];
-        variable_value *input3 = (variable_value *)args[2];
-        variable_value *input4 = (variable_value *)args[3];
-        variable_value *input5 = (variable_value *)args[4];
-        variable_value *input6 = (variable_value *)args[5];
-        variable_value *input7 = (variable_value *)args[6];
-        variable_value *input8 = (variable_value *)args[7];
-        testHold(*input8);
-        std::string input9((const char *)args[8]);
-        std::string input10((const char *)args[9]);
-        robot_index = createModel((int)*input1, (int)*input2, (int)*input3,
-                                  (int)*input4, (int)*input5, (int)*input6,
-                                  (int)*input7, (int)*input8, input9, input10);
-        uniq_name = new char[40];
-        sprintf(uniq_name, "robot-%u", robot_index);
-        break;
-      }
-      case 4: {  // change Color
-        if (!robot_index) {
-          throw std::exception();
-        }
-        std::string input1((const char *)args[0]);
-        changeColor(robot_index, input1);
-        break;
-      }
-      case 5: {  // moveObject
-        if (!robot_index) {
-          throw std::exception();
-        }
-        variable_value *input1 = (variable_value *)args[0];
-        variable_value *input2 = (variable_value *)args[1];
-        variable_value *input3 = (variable_value *)args[2];
-        variable_value *input4 = (variable_value *)args[3];
-        variable_value *input5 = (variable_value *)args[4];
-        variable_value *input6 = (variable_value *)args[5];
-        moveObject(robot_index, (int)*input1, (int)*input2, (int)*input3,
-                   (int)*input4, (int)*input5, (int)*input6);
-        break;
-      }
-      case 6: {  // getX
-        if (!robot_index) {
-          throw std::exception();
-        }
-        rez = getX(robot_index);
-        break;
-      }
-      case 7: {  // getY
-        if (!robot_index) {
-          throw std::exception();
-        }
-        rez = getY(robot_index);
-        break;
-      }
-      case 8: {  // getZ
-        if (!robot_index) {
-          throw std::exception();
-        }
-        rez = getZ(robot_index);
-        break;
-      }
-      case 9: {  // getAngle
-        if (!robot_index) {
-          throw std::exception();
-        }
-        rez = getAngle(robot_index);
-        break;
-      }
-      case 10: {  // changeStatus
-        if (!robot_index) {
-          throw std::exception();
-        }
-        variable_value *input1 = (variable_value *)args[0];
-        testHold(*input1);
-        changeStatus(robot_index, (int)*input1);
-        break;
-      }
-    };
-    return new FunctionResult(1, rez);
-  } catch (...) {
-    return new FunctionResult(0);
+	  (*box_mutex).lock();
+	  if (!(*is_world_initialized)) {
+		  (*box_mutex).unlock();
+		  throw std::exception();
+	  }
+	  (*box_mutex).unlock();
+	  if (robot_index && (functionId == 1 || functionId == 2 || functionId == 3)) {
+		  throw std::exception();
+	  }
+	  else if (!robot_index && (functionId != 1 && functionId != 2 && functionId != 3)) {
+		  throw std::exception();
+	  }
+
+	  variable_value rez = 0;
+	  switch (functionId) {
+	  case 1: {  // createCubeRobot
+
+		  variable_value *input1 = (variable_value *)args[0];
+		  variable_value *input2 = (variable_value *)args[1];
+		  variable_value *input3 = (variable_value *)args[2];
+		  variable_value *input4 = (variable_value *)args[3];
+		  variable_value *input5 = (variable_value *)args[4];
+		  variable_value *input6 = (variable_value *)args[5];
+		  variable_value *input7 = (variable_value *)args[6];
+		  variable_value *input8 = (variable_value *)args[7];
+		  testHold(*input8);
+		  std::string input9((const char *)args[8]);
+		  robot_index = createCube((int)*input1, (int)*input2, (int)*input3,
+			  (int)*input4, (int)*input5, (int)*input6,
+			  (int)*input7, (int)*input8, input9);
+		  uniq_name = new char[40];
+		  sprintf(uniq_name, "robot-%u", robot_index);
+		  break;
+	  }
+	  case 2: {  // createSphereRobot
+
+		  variable_value *input1 = (variable_value *)args[0];
+		  variable_value *input2 = (variable_value *)args[1];
+		  variable_value *input3 = (variable_value *)args[2];
+		  variable_value *input4 = (variable_value *)args[3];
+		  variable_value *input5 = (variable_value *)args[4];
+		  testHold(*input5);
+		  std::string input6((const char *)args[5]);
+		  robot_index = createSphere((int)*input1, (int)*input2, (int)*input3,
+			  (int)*input4, (int)*input5, input6);
+		  uniq_name = new char[40];
+		  sprintf(uniq_name, "robot-%u", robot_index);
+		  break;
+	  }
+	  case 3: {  // createModelRobot
+
+		  variable_value *input1 = (variable_value *)args[0];
+		  variable_value *input2 = (variable_value *)args[1];
+		  variable_value *input3 = (variable_value *)args[2];
+		  variable_value *input4 = (variable_value *)args[3];
+		  variable_value *input5 = (variable_value *)args[4];
+		  variable_value *input6 = (variable_value *)args[5];
+		  variable_value *input7 = (variable_value *)args[6];
+		  variable_value *input8 = (variable_value *)args[7];
+		  testHold(*input8);
+		  std::string input9((const char *)args[8]);
+		  std::string input10((const char *)args[9]);
+		  robot_index = createModel((int)*input1, (int)*input2, (int)*input3,
+			  (int)*input4, (int)*input5, (int)*input6,
+			  (int)*input7, (int)*input8, input9, input10);
+		  uniq_name = new char[40];
+		  sprintf(uniq_name, "robot-%u", robot_index);
+		  break;
+	  }
+	  case 4: {  // change Color
+		  if (!robot_index) {
+			  throw std::exception();
+		  }
+		  std::string input1((const char *)args[0]);
+		  changeColor(robot_index, input1);
+		  break;
+	  }
+	  case 5: {  // moveObject
+		  if (!robot_index) {
+			  throw std::exception();
+		  }
+		  variable_value *input1 = (variable_value *)args[0];
+		  variable_value *input2 = (variable_value *)args[1];
+		  variable_value *input3 = (variable_value *)args[2];
+		  variable_value *input4 = (variable_value *)args[3];
+		  variable_value *input5 = (variable_value *)args[4];
+		  variable_value *input6 = (variable_value *)args[5];
+		  moveObject(robot_index, (int)*input1, (int)*input2, (int)*input3,
+			  (int)*input4, (int)*input5, (int)*input6);
+		  break;
+	  }
+	  case 6: {  // getX
+		  if (!robot_index) {
+			  throw std::exception();
+		  }
+		  rez = getX(robot_index);
+		  break;
+	  }
+	  case 7: {  // getY
+		  if (!robot_index) {
+			  throw std::exception();
+		  }
+		  rez = getY(robot_index);
+		  break;
+	  }
+	  case 8: {  // getZ
+		  if (!robot_index) {
+			  throw std::exception();
+		  }
+		  rez = getZ(robot_index);
+		  break;
+	  }
+	  case 9: {  // getAngle
+		  if (!robot_index) {
+			  throw std::exception();
+		  }
+		  rez = getAngle(robot_index);
+		  break;
+	  }
+	  case 10: {  // changeStatus
+		  if (!robot_index) {
+			  throw std::exception();
+		  }
+		  variable_value *input1 = (variable_value *)args[0];
+		  testHold(*input1);
+		  changeStatus(robot_index, (int)*input1);
+		  break;
+	  }
+	  };
+	  return new FunctionResult(1, rez);
+  }
+  catch (...) {
+	  return new FunctionResult(0);
   };
 };
 

@@ -10,8 +10,9 @@ MKDIR = "C:\msys\1.0\bin\mkdir.exe"
 MODULE_HEADERS_DIR = "C:\Program Files (x86)\Jenkins\workspace\module_headers"
 SIMPLEINI_DIR = "C:\Program Files (x86)\Jenkins\workspace\RCML_build\simpleini"
 BOOST_DIR_LIBS = "C:\boost_1_58_0\stage\lib"
+MESSAGE_FUNCTIONS_DIR = "D:/TempRepoNewAPI/u3d_function_module"
 
-INCLUDE_DIR_FLAGS = -I${MODULE_HEADERS_DIR} -I${BOOST_DIR}
+INCLUDE_DIR_FLAGS = -I${MODULE_HEADERS_DIR} -I${BOOST_DIR} -I${MESSAGE_FUNCTIONS_DIR}
 
 FLAGS_MUTUAL = -Wall -m32 -std=c++11 ${INCLUDE_DIR_FLAGS} -MMD -MP -MF "${OBJECTDIR}/$@.d"
 
@@ -33,11 +34,11 @@ clean:
 	@echo "-------------------------" 
 	${RM} -rf ${OBJECTDIR}
 
-messages_functions.o:  messages_functions.cpp
+messages_functions.o:
 	@echo "-------------------------" 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} -f "${OBJECTDIR}/$@.d"
-	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/messages_functions.o messages_functions.cpp
+	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/messages_functions.o ${MESSAGE_FUNCTIONS_DIR}/messages_functions.cpp
 
 u3d_robot_module.o:  u3d_robot_module.cpp
 	@echo "-------------------------" 
