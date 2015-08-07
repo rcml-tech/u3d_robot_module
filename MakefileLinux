@@ -6,8 +6,9 @@ CXX=g++
 # Constants
 MODULE_HEADERS_DIR = /var/lib/jenkins/workspace/module_headers/
 SIMPLEINI_DIR = /var/lib/jenkins/workspace/RCML_build/simpleini/
+MESSAGE_FUNCTIONS_DIR = ../module_function_u3d
 
-INCLUDE_DIR_FLAGS = -I${MODULE_HEADERS_DIR} -I${SIMPLEINI_DIR}
+INCLUDE_DIR_FLAGS = -I${MODULE_HEADERS_DIR} -I${SIMPLEINI_DIR} -I${MESSAGE_FUNCTIONS_DIR}
 
 FLAGS_MUTUAL = -Wall -m32 -std=c++11 -fPIC ${INCLUDE_DIR_FLAGS} -MMD -MP -MF "${OBJECTDIR}/$@.d"
 
@@ -27,19 +28,19 @@ clean:
 	@echo "-------------------------" 
 	rm -rf ${OBJECTDIR}
 
-messages.o:  messages.cpp
+messages_functions.o:
 	@echo "-------------------------" 
 	mkdir -p ${OBJECTDIR}
 	rm -f "${OBJECTDIR}/$@.d"
-	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/messages.o messages.cpp
+	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/messages_functions.o ${MESSAGE_FUNCTIONS_DIR}/messages_functions.cpp
 
 u3d_robot_module.o:  u3d_robot_module.cpp
 	@echo "-------------------------" 
 	mkdir -p ${OBJECTDIR}
 	rm -f "${OBJECTDIR}/$@.d"
-	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/u3d_robot_module.o u3d_robot_module.cpp
+	$(COMPILE.cc) $(FLAGS) -o  ${OBJECTDIR}/u3d_robot_module.o u3d_robot_module.cpp
 
-module: messages.o u3d_robot_module.o 
+module: messages_functions.o u3d_robot_module.o
 	@echo "-------------------------" 
 	mkdir -p ${OBJECTDIR}
-	${LINK.cc} -m32 -shared ${OBJECTDIR}/u3d_robot_module.o ${OBJECTDIR}/messages.o -o ${OBJECTDIR}/u3d_module_$(FILENAME_FIX).so
+	${LINK.cc} -m32 -shared ${OBJECTDIR}/u3d_robot_module.o ${OBJECTDIR}/messages.o -o ${OBJECTDIR}/u3d_module_$(FILENAME_FIX).so -lboost_thread

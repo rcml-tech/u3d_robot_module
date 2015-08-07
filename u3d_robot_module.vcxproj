@@ -41,13 +41,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\..\bin\robot_modules\u3d</OutDir>
+    <OutDir>..\..\RCML_build_20_07_2015\robot_modules\u3d</OutDir>
     <TargetName>u3d_module</TargetName>
+    <IncludePath>D:\TempRepoNewAPI\module_headers_20_07_2015;D:\TempRepo\simpleini;D:\Soft\boost_1_58_0;D:\TempRepoNewAPI\u3d_function_module;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Soft\boost_1_58_0\libs;d:\Soft\boost_1_58_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\..\bin\robot_modules\u3d</OutDir>
-    <TargetName>u3d_module_rls</TargetName>
+    <OutDir>..\..\RCML_build_20_07_2015\robot_modules\u3d</OutDir>
+    <TargetName>u3d_module</TargetName>
+    <IncludePath>D:\TempRepoNewAPI\module_headers_20_07_2015;D:\TempRepo\simpleini;D:\Soft\boost_1_58_0;D:\TempRepoNewAPI\u3d_function_module;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Soft\boost_1_58_0\libs;d:\Soft\boost_1_58_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -85,13 +89,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="messages.cpp" />
+    <ClCompile Include="..\u3d_function_module\messages_functions.cpp" />
     <ClCompile Include="u3d_robot_module.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="define_section.h" />
-    <ClInclude Include="messages.h" />
-    <ClInclude Include="stringC11.h" />
+    <ClInclude Include="..\u3d_function_module\messages_functions.h" />
     <ClInclude Include="u3d_robot_module.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
