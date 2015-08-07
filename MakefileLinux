@@ -43,4 +43,4 @@ u3d_robot_module.o:  u3d_robot_module.cpp
 module: messages_functions.o u3d_robot_module.o
 	@echo "-------------------------" 
 	mkdir -p ${OBJECTDIR}
-	${LINK.cc} -m32 -shared ${OBJECTDIR}/u3d_robot_module.o ${OBJECTDIR}/messages.o -o ${OBJECTDIR}/u3d_module_$(FILENAME_FIX).so -lboost_thread
+	${LINK.cc} -m32 -shared ${OBJECTDIR}/u3d_robot_module.o ${OBJECTDIR}/messages_functions.o -o ${OBJECTDIR}/u3d_module_$(FILENAME_FIX).so -lboost_thread
