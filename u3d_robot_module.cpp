@@ -24,6 +24,10 @@
 /////////
 const unsigned int COUNT_u3dRobot_FUNCTIONS = 10;
 const unsigned int COUNT_AXIS = 0;
+// From messages_functions.cpp
+extern bool *is_world_initialized;
+extern bool is_read_from_shared_memory;
+extern boost::mutex *box_mutex;
 
 void testHold(int _hold) {
   switch (_hold) {
@@ -202,22 +206,29 @@ FunctionResult *u3dRobot::executeFunction(CommandMode mode,
     return NULL;
   }
 
-  bool is_read_from_shared_memory = returnIsReadSharedMemory();
   if (!is_read_from_shared_memory) {
     readSharedMemory();
   }
 
   try {
-    bool *temp_flag = returnIsWorldInitializedFlag();
-    if (!(*temp_flag)) {
+    (*box_mutex).lock();
+    if (!(*is_world_initialized)) {
+      (*box_mutex).unlock();
       throw std::exception();
     }
+    (*box_mutex).unlock();
+    if (robot_index &&
+        (functionId == 1 || functionId == 2 || functionId == 3)) {
+      throw std::exception();
+    } else if (!robot_index &&
+               (functionId != 1 && functionId != 2 && functionId != 3)) {
+      throw std::exception();
+    }
+
     variable_value rez = 0;
     switch (functionId) {
       case 1: {  // createCubeRobot
-        if (robot_index) {
-          throw std::exception();
-        }
+
         variable_value *input1 = (variable_value *)args[0];
         variable_value *input2 = (variable_value *)args[1];
         variable_value *input3 = (variable_value *)args[2];
@@ -236,9 +247,7 @@ FunctionResult *u3dRobot::executeFunction(CommandMode mode,
         break;
       }
       case 2: {  // createSphereRobot
-        if (robot_index) {
-          throw std::exception();
-        }
+
         variable_value *input1 = (variable_value *)args[0];
         variable_value *input2 = (variable_value *)args[1];
         variable_value *input3 = (variable_value *)args[2];
@@ -253,9 +262,7 @@ FunctionResult *u3dRobot::executeFunction(CommandMode mode,
         break;
       }
       case 3: {  // createModelRobot
-        if (robot_index) {
-          throw std::exception();
-        }
+
         variable_value *input1 = (variable_value *)args[0];
         variable_value *input2 = (variable_value *)args[1];
         variable_value *input3 = (variable_value *)args[2];
