@@ -38,7 +38,7 @@ messages_functions.o:
 	@echo "-------------------------" 
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} -f "${OBJECTDIR}/$@.d"
-	$(COMPILE.cc) $(FLAGS) -o ${OBJECTDIR}/messages_functions.o ${MESSAGE_FUNCTIONS_DIR}/messages_functions.cpp
+	$(COMPILE.cc) $(FLAGS) -D_WIN32_WINNT=0x0501 -DWINVER=0x0501 -o ${OBJECTDIR}/messages_functions.o ${MESSAGE_FUNCTIONS_DIR}/messages_functions.cpp
 
 u3d_robot_module.o:  u3d_robot_module.cpp
 	@echo "-------------------------" 
