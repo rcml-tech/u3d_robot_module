@@ -50,4 +50,4 @@ u3d_robot_module.o:  u3d_robot_module.cpp
 module: messages_functions.o u3d_robot_module.o
 	@echo "-------------------------" 
 	${MKDIR} -p ${OBJECTDIR}
-	${LINK.cc} -m32 -shared ${OBJECTDIR}/u3d_robot_module.o ${OBJECTDIR}/messages_functions.o -o ${OBJECTDIR}/u3d_module_$(FILENAME_FIX).dll -L${BOOST_LIBS_DIR} ${BOOST_LIBS} -lws2_32
+	${LINK.cc} -m32 -shared ${OBJECTDIR}/u3d_robot_module.o ${OBJECTDIR}/messages_functions.o -o ${OBJECTDIR}/u3d_module_$(FILENAME_FIX).dll -L${BOOST_DIR_LIBS} ${BOOST_LIBS} -lws2_32
