@@ -29,6 +29,8 @@ extern bool *is_world_initialized;
 extern bool is_read_from_shared_memory;
 extern boost::mutex *box_mutex;
 
+#define IID "RCT.u3d_robot_module_v100"
+
 void testHold(int _hold) {
   switch (_hold) {
     case 0:
@@ -40,6 +42,12 @@ void testHold(int _hold) {
 }
 
 u3dRobotModule::u3dRobotModule() {
+  mi = new ModuleInfo;
+  mi->uid = IID;
+  mi->mode = ModuleInfo::Modes::PROD;
+  mi->version = BUILD_NUMBER;
+  mi->digest = NULL;
+
   u3drobot_functions = new FunctionData *[COUNT_u3dRobot_FUNCTIONS];
   system_value function_id = 0;
 
@@ -138,7 +146,7 @@ void u3dRobot::prepare(colorPrintfRobot_t *colorPrintf_p,
   this->colorPrintf_p = colorPrintfVA_p;
 }
 
-const char *u3dRobotModule::getUID() { return "u3dRobot_module_dll"; };
+const struct ModuleInfo &u3dRobotModule::getModuleInfo() { return *mi; }
 
 FunctionData **u3dRobotModule::getFunctions(unsigned int *count_functions) {
   *count_functions = COUNT_u3dRobot_FUNCTIONS;
@@ -177,6 +185,7 @@ void u3dRobotModule::robotFree(Robot *robot) {
 void u3dRobotModule::final() { aviable_connections.clear(); };
 
 void u3dRobotModule::destroy() {
+  delete mi;
   for (unsigned int j = 0; j < COUNT_u3dRobot_FUNCTIONS; ++j) {
     if (u3drobot_functions[j]->count_params) {
       delete[] u3drobot_functions[j]->params;
@@ -209,6 +218,8 @@ FunctionResult *u3dRobot::executeFunction(CommandMode mode,
   if (!is_read_from_shared_memory) {
     readSharedMemory();
   }
+
+  FunctionResult *fr = NULL;
 
   try {
     (*box_mutex).lock();
@@ -341,10 +352,11 @@ FunctionResult *u3dRobot::executeFunction(CommandMode mode,
         break;
       }
     };
-    return new FunctionResult(1, rez);
+    fr = new FunctionResult(FunctionResult::Types::VALUE, rez);
   } catch (...) {
-    return new FunctionResult(0);
+    fr = new FunctionResult(FunctionResult::Types::EXCEPTION);
   };
+  return fr;
 };
 
 int u3dRobotModule::startProgram(int uniq_index) { return 0; }
@@ -374,6 +386,10 @@ u3dRobot::~u3dRobot() {
 }
 
 u3dRobot::u3dRobot() : robot_index(0) { uniq_name = NULL; };
+
+PREFIX_FUNC_DLL unsigned short getRobotModuleApiVersion() {
+  return ROBOT_MODULE_API_VERSION;
+};
 
 PREFIX_FUNC_DLL RobotModule *getRobotModuleObject() {
   return new u3dRobotModule();
