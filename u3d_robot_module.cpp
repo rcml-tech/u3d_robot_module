@@ -388,7 +388,7 @@ u3dRobot::~u3dRobot() {
 u3dRobot::u3dRobot() : robot_index(0) { uniq_name = NULL; };
 
 PREFIX_FUNC_DLL unsigned short getRobotModuleApiVersion() {
-  return ROBOT_MODULE_API_VERSION;
+  return MODULE_API_VERSION;
 };
 
 PREFIX_FUNC_DLL RobotModule *getRobotModuleObject() {
