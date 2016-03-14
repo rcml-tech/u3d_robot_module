@@ -43,15 +43,15 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\..\RCML_build_20_07_2015\robot_modules\u3d</OutDir>
     <TargetName>u3d_module</TargetName>
-    <IncludePath>D:\TempRepoNewAPI\module_headers_20_07_2015;D:\TempRepo\simpleini;D:\Soft\boost_1_58_0;D:\TempRepoNewAPI\u3d_function_module;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Soft\boost_1_58_0\libs;d:\Soft\boost_1_58_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\TempRepoNewAPI\module_headers_20_07_2015;D:\TempRepo\simpleini;D:\Soft\boost_1_60_0;D:\TempRepoNewAPI\u3d_function_module;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Soft\boost_1_60_0\libs;d:\Soft\boost_1_60_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\..\RCML_build_20_07_2015\robot_modules\u3d</OutDir>
     <TargetName>u3d_module</TargetName>
-    <IncludePath>D:\TempRepoNewAPI\module_headers_20_07_2015;D:\TempRepo\simpleini;D:\Soft\boost_1_58_0;D:\TempRepoNewAPI\u3d_function_module;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Soft\boost_1_58_0\libs;d:\Soft\boost_1_58_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\TempRepoNewAPI\module_headers_20_07_2015;D:\TempRepo\simpleini;D:\Soft\boost_1_60_0;D:\TempRepoNewAPI\u3d_function_module;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Soft\boost_1_60_0\libs;d:\Soft\boost_1_60_0\stage\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -61,7 +61,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;U3D_ROBOT_MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\simpleini;C:\Programs\boost_1_58_0;..\module_headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\simpleini;C:\Programs\boost_1_60_0;..\module_headers;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
