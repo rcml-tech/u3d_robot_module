@@ -35,11 +35,13 @@ class u3dRobotModule : public RobotModule {
   AxisData **robot_axis;
   colorPrintfModuleVA_t *colorPrintf_p;
 
+  ModuleInfo *mi;
+
  public:
   u3dRobotModule();
 
   // init
-  const char *getUID();
+  const struct ModuleInfo &getModuleInfo();
   void prepare(colorPrintfModule_t *colorPrintf_p,
                colorPrintfModuleVA_t *colorPrintfVA_p);
 
