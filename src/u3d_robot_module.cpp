@@ -19,7 +19,7 @@
 #include "robot_module.h"
 #include "u3d_robot_module.h"
 
-#include "messages_functions.h"
+#include <messages_functions.h>
 
 /////////
 const unsigned int COUNT_u3dRobot_FUNCTIONS = 10;
@@ -134,7 +134,7 @@ u3dRobotModule::u3dRobotModule() {
 
   u3drobot_functions[function_id] =
       new FunctionData(function_id + 1, 1, Params, "changeStatus");
-};
+}
 
 void u3dRobotModule::prepare(colorPrintfModule_t *colorPrintf_p,
                              colorPrintfModuleVA_t *colorPrintfVA_p) {
@@ -153,7 +153,7 @@ FunctionData **u3dRobotModule::getFunctions(unsigned int *count_functions) {
   return u3drobot_functions;
 }
 
-int u3dRobotModule::init() { return 0; };
+int u3dRobotModule::init() { return 0; }
 
 Robot *u3dRobotModule::robotRequire() {
   module_mutex.lock();
@@ -163,7 +163,7 @@ Robot *u3dRobotModule::robotRequire() {
   Robot *robot = u3d_robot;
   module_mutex.unlock();
   return robot;
-};
+}
 
 void u3dRobotModule::robotFree(Robot *robot) {
   module_mutex.lock();
@@ -173,16 +173,16 @@ void u3dRobotModule::robotFree(Robot *robot) {
     if (u3d_robot == *i) {
       if ((*i)->robot_index) {
         deleteRobot((*i)->robot_index);
-      };
+      }
       delete (*i);
       aviable_connections.erase(i);
       break;
-    };
+    }
   }
   module_mutex.unlock();
-};
+}
 
-void u3dRobotModule::final() { aviable_connections.clear(); };
+void u3dRobotModule::final() { aviable_connections.clear(); }
 
 void u3dRobotModule::destroy() {
   delete mi;
@@ -194,14 +194,14 @@ void u3dRobotModule::destroy() {
   }
   delete[] u3drobot_functions;
   delete this;
-};
+}
 
 AxisData **u3dRobotModule::getAxis(unsigned int *count_axis) {
   (*count_axis) = COUNT_AXIS;
   return NULL;
-};
+}
 
-void u3dRobot::axisControl(system_value axis_index, variable_value value){};
+void u3dRobot::axisControl(system_value axis_index, variable_value value){}
 
 void *u3dRobotModule::writePC(unsigned int *buffer_length) {
   *buffer_length = 0;
@@ -351,13 +351,13 @@ FunctionResult *u3dRobot::executeFunction(CommandMode mode,
         changeStatus(robot_index, (int)*input1);
         break;
       }
-    };
+    }
     fr = new FunctionResult(FunctionResult::Types::VALUE, rez);
   } catch (...) {
     fr = new FunctionResult(FunctionResult::Types::EXCEPTION);
-  };
+  }
   return fr;
-};
+}
 
 int u3dRobotModule::startProgram(int uniq_index) { return 0; }
 
@@ -385,12 +385,12 @@ u3dRobot::~u3dRobot() {
   }
 }
 
-u3dRobot::u3dRobot() : robot_index(0) { uniq_name = NULL; };
+u3dRobot::u3dRobot() : robot_index(0) { uniq_name = NULL; }
 
 PREFIX_FUNC_DLL unsigned short getRobotModuleApiVersion() {
   return MODULE_API_VERSION;
-};
+}
 
 PREFIX_FUNC_DLL RobotModule *getRobotModuleObject() {
   return new u3dRobotModule();
-};
+}
